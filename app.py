@@ -1,360 +1,602 @@
-import streamlit as st
+import re
+import random
+from datetime import datetime, timedelta
+
+import numpy as np
 import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+import streamlit as st
 
 # ============================================================
-# PAGE CONFIGURATION
+# PAGE CONFIG
 # ============================================================
+
 st.set_page_config(
-    page_title="Personal Finance Assistant",
+    page_title="WalletAI",
     page_icon="💰",
-    layout="wide"
+    layout="wide",
 )
 
 # ============================================================
-# SESSION STATE
-# Keeps chat history alive across reruns
+# THEME
 # ============================================================
-if "messages" not in st.session_state:
-    st.session_state.messages = []
 
-# ============================================================
-# MOCK AI FUNCTION
-# Replace with OpenAI/Gemini API later if desired
-# ============================================================
-def get_finance_advice(query):
-    """
-    Prototype financial advisor logic.
+if "dark_mode" not in st.session_state:
+    st.session_state.dark_mode = True
 
-    Replace this section with OpenAI/Gemini API calls
-    when moving from prototype to production.
-    """
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
 
-    q = query.lower()
+if "transactions" not in st.session_state:
+    categories = [
+        "Groceries",
+        "Dining",
+        "Coffee",
+        "Shopping",
+        "Transport",
+        "Utilities",
+        "Entertainment",
+    ]
 
-    if "compound interest" in q:
-        return {
-            "title": "📈 Understanding Compound Interest",
-            "response": (
-                "Compound interest means earning interest on both your original "
-                "investment and the interest already earned. Starting early is "
-                "one of the most powerful ways to build wealth."
-            ),
-            "tip": "Even small monthly investments can grow significantly over time."
-        }
+    rows = []
 
-    elif "debt" in q or "loan" in q:
-        return {
-            "title": "💳 Debt Management Guidance",
-            "response": (
-                "Focus on paying high-interest debt first while continuing "
-                "minimum payments on other obligations. Avoid taking on new debt "
-                "unless necessary."
-            ),
-            "tip": "Create a repayment plan and track progress monthly."
-        }
+    for i in range(180):
+        rows.append(
+            {
+                "date": datetime.now() - timedelta(days=i),
+                "category": random.choice(categories),
+                "amount": round(random.uniform(3, 120), 2),
+                "type": "expense",
+            }
+        )
 
-    elif "budget" in q:
-        return {
-            "title": "📊 Budgeting Advice",
-            "response": (
-                "A simple budgeting framework is the 50/30/20 rule:\n"
-                "- 50% Needs\n"
-                "- 30% Wants\n"
-                "- 20% Savings & Investments"
-            ),
-            "tip": "Review your budget at least once per month."
-        }
+    st.session_state.transactions = pd.DataFrame(rows)
 
-    elif "snowball" in q:
-        return {
-            "title": "❄️ Snowball vs Avalanche",
-            "response": (
-                "Snowball Method: Pay smallest balances first for motivation.\n\n"
-                "Avalanche Method: Pay highest interest rates first to save money."
-            ),
-            "tip": "Avalanche saves more money, Snowball often improves consistency."
-        }
+if "goals" not in st.session_state:
+    st.session_state.goals = [
+        {"goal": "Emergency Fund", "progress": 78},
+        {"goal": "Vacation", "progress": 52},
+        {"goal": "New Laptop", "progress": 30},
+    ]
 
-    elif "saving" in q or "savings" in q:
-        return {
-            "title": "🏦 Savings Strategy",
-            "response": (
-                "Build an emergency fund covering 3–6 months of expenses. "
-                "Automate transfers to savings whenever possible."
-            ),
-            "tip": "Treat savings like a recurring bill."
-        }
+theme_toggle = st.sidebar.toggle(
+    "🌗 Dark Mode",
+    value=st.session_state.dark_mode
+)
 
-    else:
-        return {
-            "title": "💡 Personal Finance Guidance",
-            "response": (
-                "Financial wellness starts with budgeting, reducing high-interest "
-                "debt, building savings, and investing consistently."
-            ),
-            "tip": "Small consistent actions often outperform occasional big changes."
-        }
+st.session_state.dark_mode = theme_toggle
 
+BG = "#0E1117" if st.session_state.dark_mode else "#FFFFFF"
+CARD = "#161B22" if st.session_state.dark_mode else "#F8F9FA"
+TEXT = "#FAFAFA" if st.session_state.dark_mode else "#111111"
 
-# ============================================================
-# HEADER
-# ============================================================
-st.title("💰 Personal Finance Assistant")
-st.caption(
-    "Your Finance Minister for smarter budgeting, savings, and debt management."
+st.markdown(
+    f"""
+    <style>
+
+    .stApp {{
+        background-color:{BG};
+    }}
+
+    .wallet-card {{
+        padding:18px;
+        border-radius:18px;
+        background:{CARD};
+        border:1px solid rgba(255,255,255,0.08);
+        margin-bottom:10px;
+    }}
+
+    .metric-title {{
+        color:gray;
+        font-size:14px;
+    }}
+
+    .metric-value {{
+        font-size:32px;
+        font-weight:700;
+    }}
+
+    .ai-box {{
+        padding:15px;
+        border-radius:15px;
+        background:{CARD};
+        margin-bottom:10px;
+    }}
+
+    </style>
+    """,
+    unsafe_allow_html=True,
 )
 
 # ============================================================
 # SIDEBAR
 # ============================================================
-with st.sidebar:
 
-    st.header("🏛️ Finance Minister")
+st.sidebar.title("💰 WalletAI")
 
-    page = st.radio(
-        "Navigation",
-        [
-            "Assistant",
-            "Dashboard",
-            "About"
-        ]
-    )
-
-    st.divider()
-
-    financial_literacy = st.toggle(
-        "📚 Financial Literacy Mode",
-        value=True
-    )
-
-    st.divider()
-
-    st.markdown("### Quick Topics")
-    st.write(
-        """
-        • Budgeting  
-        • Savings  
-        • Debt Management  
-        • Compound Interest  
-        • Financial Habits
-        """
-    )
+page = st.sidebar.radio(
+    "Navigation",
+    [
+        "📊 Dashboard",
+        "💸 Expenses",
+        "🎯 Goals",
+        "📈 Investments",
+    ],
+)
 
 # ============================================================
-# ABOUT PAGE
+# DATA HELPERS
 # ============================================================
-if page == "About":
 
-    st.header("About This Prototype")
+def generate_cashflow_data():
 
-    st.markdown("""
-    ### Personal Finance Assistant
+    dates = pd.date_range(end=datetime.now(), periods=12, freq="M")
 
-    This Streamlit application demonstrates how AI can help users:
+    income = np.random.randint(5000, 6500, len(dates))
+    expenses = np.random.randint(1200, 2600, len(dates))
 
-    - Build savings habits
-    - Manage debt responsibly
-    - Understand budgeting
-    - Improve financial literacy
+    return pd.DataFrame(
+        {
+            "Month": dates,
+            "Income": income,
+            "Expenses": expenses,
+        }
+    )
 
-    ### Technology Stack
 
-    - Streamlit
-    - Python
-    - Pandas
-    - Session State
+def networth_data():
 
-    ### Future Enhancements
+    return pd.DataFrame(
+        {
+            "Asset": [
+                "Cash",
+                "Investments",
+                "Emergency Fund",
+                "Crypto",
+            ],
+            "Value": [
+                15000,
+                25000,
+                7000,
+                3000,
+            ],
+        }
+    )
 
-    - OpenAI Integration
-    - Gemini Integration
-    - Personalized Budget Tracking
-    - Investment Education
-    - Financial Goal Planning
 
-    Developed as a GitHub + Streamlit Cloud deployable prototype.
-    """)
+def top_expenses_data():
+
+    return pd.DataFrame(
+        {
+            "Category": [
+                "Shopping",
+                "Dining",
+                "Groceries",
+                "Transport",
+                "Coffee",
+            ],
+            "Amount": [
+                890,
+                620,
+                510,
+                340,
+                160,
+            ],
+        }
+    )
+
+
+# ============================================================
+# NLP EXPENSE PARSER
+# ============================================================
+
+def parse_expense_text(text):
+
+    matches = re.findall(
+        r"([A-Za-z ]+?)\s*\$?(\d+(?:\.\d+)?)",
+        text,
+        re.IGNORECASE,
+    )
+
+    parsed = []
+
+    for label, amount in matches:
+
+        category = label.strip().title()
+
+        if category:
+            parsed.append(
+                {
+                    "date": datetime.now(),
+                    "category": category,
+                    "amount": float(amount),
+                    "type": "expense",
+                }
+            )
+
+    return parsed
+
+
+# ============================================================
+# AI ASSISTANT
+# ============================================================
+
+def assistant_response(prompt):
+
+    lower = prompt.lower()
+
+    if "coffee" in lower and "spend" in lower:
+        return (
+            "☕ You spent approximately **$164** "
+            "on Coffee during the past 30 days."
+        )
+
+    if "grocery" in lower and "dining" in lower:
+
+        compare_df = pd.DataFrame(
+            {
+                "Month": [
+                    "Jan",
+                    "Feb",
+                    "Mar",
+                    "Apr",
+                    "May",
+                    "Jun",
+                ],
+                "Groceries": [
+                    420,
+                    480,
+                    460,
+                    500,
+                    520,
+                    540,
+                ],
+                "Dining": [
+                    650,
+                    620,
+                    710,
+                    670,
+                    740,
+                    760,
+                ],
+            }
+        )
+
+        return {
+            "message":
+                "📊 Grocery vs Dining comparison "
+                "for the past 6 months.",
+            "data": compare_df,
+        }
+
+    if "compare" in lower:
+        sample = pd.DataFrame(
+            {
+                "Category": ["Groceries", "Dining"],
+                "Amount": [540, 760],
+            }
+        )
+
+        return {
+            "message":
+                "Comparison generated.",
+            "data": sample,
+        }
+
+    return (
+        "🤖 Based on your spending patterns, "
+        "you remain on track to hit your savings goal "
+        "this month."
+    )
+
 
 # ============================================================
 # DASHBOARD PAGE
 # ============================================================
-elif page == "Dashboard":
 
-    st.header("📊 Financial Dashboard")
+if page == "📊 Dashboard":
 
-    # -------------------------
-    # METRICS
-    # -------------------------
-    metric_col1, metric_col2, metric_col3 = st.columns(3)
+    st.title("💰 WalletAI Dashboard")
 
-    with metric_col1:
+    income = 5500
+    expenses = 1879
+    balance = 3620
+
+    # --------------------------------------------------------
+    # TOP METRICS
+    # --------------------------------------------------------
+
+    m1, m2, m3 = st.columns(3)
+
+    with m1:
         st.metric(
-            label="Monthly Income",
-            value="$4,000"
+            "💵 Income",
+            f"S$ {income:,.0f}",
         )
 
-    with metric_col2:
+    with m2:
         st.metric(
-            label="Savings Goal",
-            value="$800"
+            "💸 Expenses",
+            f"S$ {expenses:,.0f}",
         )
 
-    with metric_col3:
+    with m3:
         st.metric(
-            label="Debt Remaining",
-            value="$2,500"
+            "🏦 Balance",
+            f"S$ {balance:,.0f}",
         )
 
     st.divider()
 
-    # -------------------------
-    # 50/30/20 BUDGET CHART
-    # -------------------------
-    st.subheader("50 / 30 / 20 Budget Rule")
-
-    budget_df = pd.DataFrame({
-        "Category": ["Needs", "Wants", "Savings"],
-        "Percent": [50, 30, 20]
-    })
-
-    st.bar_chart(
-        budget_df.set_index("Category")
-    )
-
-    st.info(
-        "A common budgeting framework: 50% Needs, 30% Wants, 20% Savings."
-    )
-
-# ============================================================
-# ASSISTANT PAGE
-# ============================================================
-else:
-
-    st.header("🤖 Financial Assistant")
+    left, right = st.columns([2.3, 1])
 
     # --------------------------------------------------------
-    # FINANCIAL LITERACY MODE
+    # LEFT ANALYTICS
     # --------------------------------------------------------
-    if financial_literacy:
-        with st.expander("📚 Financial Literacy Tip"):
-            st.write(
-                """
-                Financial literacy is the ability to understand and effectively
-                use financial skills such as budgeting, saving, investing,
-                and debt management.
-                """
+
+    with left:
+
+        cashflow_df = generate_cashflow_data()
+
+        st.subheader("📈 Cashflow Trend")
+
+        fig = go.Figure()
+
+        fig.add_trace(
+            go.Scatter(
+                x=cashflow_df["Month"],
+                y=cashflow_df["Income"],
+                mode="lines",
+                name="Income",
+            )
+        )
+
+        fig.add_trace(
+            go.Scatter(
+                x=cashflow_df["Month"],
+                y=cashflow_df["Expenses"],
+                mode="lines",
+                name="Expenses",
+            )
+        )
+
+        fig.update_layout(height=350)
+
+        st.plotly_chart(
+            fig,
+            use_container_width=True
+        )
+
+        c1, c2 = st.columns(2)
+
+        with c1:
+
+            st.subheader("🥧 Net Worth")
+
+            net_df = networth_data()
+
+            pie = px.pie(
+                net_df,
+                values="Value",
+                names="Asset",
+                hole=0.6,
+            )
+
+            st.plotly_chart(
+                pie,
+                use_container_width=True
+            )
+
+        with c2:
+
+            st.subheader("🔥 Top Expenses")
+
+            exp_df = top_expenses_data()
+
+            bar = px.bar(
+                exp_df,
+                x="Amount",
+                y="Category",
+                orientation="h",
+            )
+
+            st.plotly_chart(
+                bar,
+                use_container_width=True
             )
 
     # --------------------------------------------------------
-    # QUICK ACTIONS
+    # AI INSIGHTS PANEL
     # --------------------------------------------------------
-    st.subheader("⚡ Quick Actions")
 
-    qa_col1, qa_col2 = st.columns(2)
+    with right:
 
-    if qa_col1.button("📈 Explain Compound Interest"):
-        response = get_finance_advice("compound interest")
+        st.subheader("🧠 AI Insights")
 
-        st.session_state.messages.append(
-            {
-                "role": "assistant",
-                "content": f"**{response['title']}**\n\n{response['response']}\n\n💡 {response['tip']}"
-            }
-        )
+        st.error("🔴 Shopping Budget Exceeded")
 
-    if qa_col2.button("❄️ Snowball vs Avalanche"):
-        response = get_finance_advice("snowball")
+        st.warning("🟡 Unusual Shopping Spending")
 
-        st.session_state.messages.append(
-            {
-                "role": "assistant",
-                "content": f"**{response['title']}**\n\n{response['response']}\n\n💡 {response['tip']}"
-            }
+        st.success("🟢 On Track for Savings Goal")
+
+        st.info(
+            "💡 Dining expenses increased 14% "
+            "compared to last month."
         )
 
     st.divider()
 
     # --------------------------------------------------------
-    # CHAT HISTORY CONTAINER
+    # AI ASSISTANT CHAT
     # --------------------------------------------------------
-    chat_container = st.container()
+
+    st.subheader("🤖 WalletAI Assistant")
+
+    chat_container = st.container(height=450)
 
     with chat_container:
-        for message in st.session_state.messages:
+
+        for message in st.session_state.chat_history:
 
             with st.chat_message(message["role"]):
-                st.markdown(message["content"])
 
-    # --------------------------------------------------------
-    # USER INPUT
-    # --------------------------------------------------------
-    user_query = st.chat_input(
-        "Ask about budgeting, savings, or debt management..."
+                st.write(message["content"])
+
+                if "chart" in message:
+                    st.bar_chart(message["chart"])
+
+    user_prompt = st.chat_input(
+        "Ask WalletAI anything..."
     )
 
-    if user_query:
+    if user_prompt:
 
-        # Store user message
-        st.session_state.messages.append(
+        st.session_state.chat_history.append(
             {
                 "role": "user",
-                "content": user_query
+                "content": user_prompt,
             }
         )
 
-        # Generate AI response
-        advice = get_finance_advice(user_query)
+        response = assistant_response(user_prompt)
 
-        assistant_message = (
-            f"### {advice['title']}\n\n"
-            f"{advice['response']}\n\n"
-            f"💡 **Tip:** {advice['tip']}"
-        )
+        if isinstance(response, dict):
 
-        st.session_state.messages.append(
-            {
-                "role": "assistant",
-                "content": assistant_message
-            }
-        )
+            st.session_state.chat_history.append(
+                {
+                    "role": "assistant",
+                    "content": response["message"],
+                    "chart": response["data"],
+                }
+            )
+
+        else:
+
+            st.session_state.chat_history.append(
+                {
+                    "role": "assistant",
+                    "content": response,
+                }
+            )
 
         st.rerun()
 
 # ============================================================
-# FOOTER
+# EXPENSES PAGE
 # ============================================================
-st.divider()
 
-st.caption(
-    "⚠️ Educational prototype only. Not financial, legal, or investment advice."
-)
+elif page == "💸 Expenses":
 
-# ============================================================
-# OPTIONAL OPENAI INTEGRATION TEMPLATE
-# ============================================================
-"""
-import os
-from openai import OpenAI
+    st.title("💸 Expense Logger")
 
-client = OpenAI(
-    api_key=os.getenv("OPENAI_API_KEY")
-)
+    st.markdown(
+        """
+        Example:
 
-def get_finance_advice(query):
-
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
-            {
-                "role":"system",
-                "content":"You are a helpful financial literacy assistant."
-            },
-            {
-                "role":"user",
-                "content":query
-            }
-        ]
+        - Had coffee $5 and lunch $12 today
+        - Starbucks coffee $6
+        - Dinner $22 and taxi $15
+        """
     )
 
-    return response.choices[0].message.content
-"""
+    text = st.text_area(
+        "Enter expense in natural language"
+    )
+
+    if st.button("➕ Add Expense"):
+
+        parsed = parse_expense_text(text)
+
+        if parsed:
+
+            df_new = pd.DataFrame(parsed)
+
+            st.session_state.transactions = pd.concat(
+                [
+                    st.session_state.transactions,
+                    df_new,
+                ],
+                ignore_index=True,
+            )
+
+            st.success(
+                f"Added {len(parsed)} expense(s)"
+            )
+
+        else:
+            st.warning(
+                "Could not detect expenses."
+            )
+
+    st.subheader("📋 Transaction History")
+
+    st.dataframe(
+        st.session_state.transactions.sort_values(
+            "date",
+            ascending=False,
+        ),
+        use_container_width=True,
+        height=500,
+    )
+
+# ============================================================
+# GOALS PAGE
+# ============================================================
+
+elif page == "🎯 Goals":
+
+    st.title("🎯 Financial Goals")
+
+    for goal in st.session_state.goals:
+
+        st.markdown(
+            f"### {goal['goal']}"
+        )
+
+        st.progress(goal["progress"] / 100)
+
+        st.caption(
+            f"{goal['progress']}% completed"
+        )
+
+# ============================================================
+# INVESTMENTS PAGE
+# ============================================================
+
+elif page == "📈 Investments":
+
+    st.title("📈 Investment Portfolio")
+
+    portfolio = pd.DataFrame(
+        {
+            "Asset": [
+                "ETF",
+                "Stocks",
+                "Crypto",
+                "Cash",
+            ],
+            "Value": [
+                18000,
+                12000,
+                3000,
+                15000,
+            ],
+        }
+    )
+
+    fig = px.treemap(
+        portfolio,
+        path=["Asset"],
+        values="Value",
+    )
+
+    st.plotly_chart(
+        fig,
+        use_container_width=True
+    )
+
+    st.dataframe(
+        portfolio,
+        use_container_width=True
+    )
