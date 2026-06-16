@@ -131,7 +131,7 @@ page = st.sidebar.radio(
 
 def generate_cashflow_data():
 
-    dates = pd.date_range(end=datetime.now(), periods=12, freq="M")
+    dates = pd.date_range(end=datetime.now(), periods=12, freq="ME")
 
     income = np.random.randint(5000, 6500, len(dates))
     expenses = np.random.randint(1200, 2600, len(dates))
