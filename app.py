@@ -51,6 +51,11 @@ if "goals" not in st.session_state:
         {"goal": "Vacation", "progress": 52},
         {"goal": "New Laptop", "progress": 30},
     ]
+if "people" not in st.session_state:
+
+    st.session_state.people = [
+        "Me"
+    ]
 
 theme_toggle = st.sidebar.toggle(
     "🌗 Dark Mode",
@@ -590,4 +595,42 @@ elif page == "📈 Investments":
     st.dataframe(
         portfolio,
         use_container_width=True
+    )
+
+
+elif page == "👥 People":
+
+    st.title("👥 People Manager")
+
+    st.write(
+        "Manage friends, family and shared expense contacts."
+    )
+
+new_person = st.text_input(
+    "Add Person"
+)
+
+if st.button("➕ Add Person"):
+
+    if new_person:
+
+        if new_person not in st.session_state.people:
+
+            st.session_state.people.append(
+                new_person
+            )
+
+            st.success(
+                f"{new_person} added"
+            )
+
+            st.rerun()
+
+
+st.subheader("Current People")
+
+for person in st.session_state.people:
+
+    st.write(
+        f"• {person}"
     )
