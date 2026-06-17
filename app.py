@@ -159,15 +159,16 @@ with st.sidebar:
 # 📊 VIEW LAYER: DASHBOARD
 if navigation_pane == "📊 Dashboard":
     st.title("Financial Dashboard")
-    st.markdown(f"Welcome back, **Jayden** — here is your financial snapshot for **{datetime.now().strftime('%B %Y')}**.")
+    st.markdown(f"Welcome back, **Jayden** — here is your financial snapshot.")
     
-  
-# Income dynamically reflects your base settings + any manually logged side-income
-total_income = st.session_state.base_monthly_income + df_tx[df_tx['Type'] == 'Income']['Amount'].sum()
-total_expenses = df_tx[df_tx['Type'] == 'Expense']['Amount'].sum()
-net_balance = total_income - total_expenses
+    df_tx = st.session_state.transactions
+
+    # NEW DYNAMIC CALCULATIONS
+    total_income = st.session_state.base_monthly_income + df_tx[df_tx['Type'] == 'Income']['Amount'].sum()
+    total_expenses = df_tx[df_tx['Type'] == 'Expense']['Amount'].sum()
+    net_balance = total_income - total_expenses
     
-    # Top Row Metrics Layout
+    # EXACTLY 4 SPACES INFRONT OF THIS LINE:
     m_col1, m_col2, m_col3 = st.columns(3)
     with m_col1:
         st.metric(label="Income", value=f"S$ {total_income:,.2f}", delta="+3.5% vs last month")
