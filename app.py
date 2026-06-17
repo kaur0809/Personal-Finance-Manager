@@ -180,16 +180,7 @@ with st.sidebar:
     st.markdown("---")
     st.info("💡 **Tip:** Adjusting parameters here will instantly recalculate top-row dashboard metrics rows!")
 
-    # Quick Simulation Toggle for light/dark properties
-    st.subheader("Preferences")
-    toggle_mode = st.toggle("🌙 Dark Mode Aesthetic Theme", value=st.session_state.dark_mode)
-    if toggle_mode != st.session_state.dark_mode:
-        st.session_state.dark_mode = toggle_mode
-        st.rerun()
-
-    st.markdown("---")
-    st.info("💡 **Tip:** Go to the **Expenses** tab to test parsing transactional data from conversational entries.")
-
+   
 
 # ==============================================================================
 # ROUTED APPLICATION PAGES
