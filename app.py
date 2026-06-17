@@ -45,20 +45,6 @@ if "transactions" not in st.session_state:
 if "splits" not in st.session_state:
     st.session_state.splits = []
 
-    rows = []
-
-    for i in range(180):
-        rows.append(
-            {
-                "date": datetime.now() - timedelta(days=i),
-                "category": random.choice(categories),
-                "amount": round(random.uniform(3, 120), 2),
-                "type": "expense",
-            }
-        )
-
-    st.session_state.transactions = pd.DataFrame(rows)
-
 if "goals" not in st.session_state:
     st.session_state.goals = [
         {"goal": "Emergency Fund", "progress": 78},
