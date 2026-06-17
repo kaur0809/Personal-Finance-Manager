@@ -164,7 +164,6 @@ def networth_data():
     )
 
 
-def top_expenses_data():
 
     def top_expenses_data():
 
