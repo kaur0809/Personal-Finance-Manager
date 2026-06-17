@@ -339,7 +339,7 @@ elif navigation_pane == "📈 Investments":
     
     with inv_col1:
         st.subheader("Aggregated Performance Metric Distribution")
-        timeline_idx = pd.date_range(end=datetime.now(), periods=12, freq='M')
+        timeline_idx = pd.date_range(end=datetime.now(), periods=12, freq='ME')
         perf_mock = pd.DataFrame({
             'Timeline': timeline_idx,
             'Portfolio Value (S$)': [50000, 52000, 51000, 55000, 58000, 62000, 60000, 65000, 70000, 72000, 74000, 76000]
