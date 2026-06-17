@@ -10,7 +10,7 @@ import re
 # CONFIGURATION & THEME STYLING
 # ==============================================================================
 st.set_page_config(
-    page_title="WalletAI — Premium Financial Dashboard",
+    page_title="MeraBatua" — Premium Financial Dashboard",
     page_icon="📊",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -189,7 +189,7 @@ with st.sidebar:
 # 📊 VIEW LAYER: DASHBOARD
 if navigation_pane == "📊 Dashboard":
     st.title("Financial Dashboard")
-    st.markdown(f"Welcome back, **Jayden** — here is your financial snapshot.")
+    st.markdown(f"Welcome back, **Kaur** — here is your financial snapshot.")
     
     df_tx = st.session_state.transactions
 
