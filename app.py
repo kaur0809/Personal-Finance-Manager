@@ -525,6 +525,44 @@ elif page == "💸 Expenses":
                 "Could not detect expenses."
             )
 
+st.subheader("🤝 Split Expense")
+
+with st.container(border=True):
+
+    expense_name = st.text_input(
+        "Expense Name",
+        key="split_expense_name"
+    )
+
+    amount = st.number_input(
+        "Amount",
+        min_value=0.0,
+        step=1.0,
+        key="split_amount"
+    )
+
+    participants = st.multiselect(
+        "Participants",
+        options=st.session_state.people,
+        default=["Me"]
+    )
+if participants:
+
+    paid_by = st.selectbox(
+        "Paid By",
+        participants
+    )
+
+if participants:
+
+    share = amount / len(participants)
+
+    st.info(
+        f"Each person pays ₹{share:.2f}"
+    )
+
+
+    
     st.subheader("📋 Transaction History")
 
     st.dataframe(
