@@ -114,6 +114,7 @@ page = st.sidebar.radio(
         "💸 Expenses",
         "🎯 Goals",
         "📈 Investments",
+        "👥 People"
     ],
 )
 
