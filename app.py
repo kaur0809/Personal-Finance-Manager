@@ -124,9 +124,8 @@ def parse_natural_language_expense(text: str):
         })
     return extracted_items
 
-
 # ==============================================================================
-# SIDEBAR NAVIGATION & THEME CONTROLLER
+# SIDEBAR NAVIGATION & THEME CONTROLLER (COMPLETED WITH STEP 3)
 # ==============================================================================
 with st.sidebar:
     st.title("💳 WalletAI")
@@ -141,6 +140,46 @@ with st.sidebar:
     )
     
     st.markdown("---")
+    
+    # STEP 3: Interactive Profile Setting Expander Panel
+    with st.expander("⚙️ Adjust Profile Parameters", expanded=False):
+        st.subheader("Base Parameters")
+        
+        # Live Baseline Income Configuration Input
+        new_income = st.number_input(
+            "Base Monthly Income (S$)", 
+            min_value=0.0, 
+            value=float(st.session_state.base_monthly_income), 
+            step=100.0,
+            key="sidebar_income_input"
+        )
+        if new_income != st.session_state.base_monthly_income:
+            st.session_state.base_monthly_income = new_income
+            st.rerun()
+            
+        # Live Savings Goal Configuration Input
+        new_savings_target = st.number_input(
+            "Monthly Savings Goal (S$)", 
+            min_value=0.0, 
+            value=float(st.session_state.monthly_savings_goal), 
+            step=50.0,
+            key="sidebar_savings_input"
+        )
+        if new_savings_target != st.session_state.monthly_savings_goal:
+            st.session_state.monthly_savings_goal = new_savings_target
+            st.rerun()
+            
+    st.markdown("---")
+    # Quick Simulation Toggle for light/dark properties
+    st.subheader("Preferences")
+    toggle_mode = st.toggle("🌙 Dark Mode Aesthetic Theme", value=st.session_state.dark_mode)
+    if toggle_mode != st.session_state.dark_mode:
+        st.session_state.dark_mode = toggle_mode
+        st.rerun()
+
+    st.markdown("---")
+    st.info("💡 **Tip:** Adjusting parameters here will instantly recalculate top-row dashboard metrics rows!")
+
     # Quick Simulation Toggle for light/dark properties
     st.subheader("Preferences")
     toggle_mode = st.toggle("🌙 Dark Mode Aesthetic Theme", value=st.session_state.dark_mode)
@@ -323,18 +362,77 @@ elif navigation_pane == "💸 Expenses":
         st.dataframe(st.session_state.transactions, use_container_width=True)
 
 
-# 🎯 VIEW LAYER: GOALS TRACKING
+# ==============================================================================
+# 🎯 VIEW LAYER: GOALS TRACKING (COMPLETED WITH STEP 4)
+# ==============================================================================
 elif navigation_pane == "🎯 Goals":
     st.title("Financial Goals Management Matrix")
+    st.markdown("Set milestones, map targets, and instantly contribute directly to dedicated financial pockets.")
     
-    st.write("Keep track of your targets and automatic structural progress accumulation metrics.")
+    # SUB-PANEL: Create a brand new custom milestone package
+    with st.expander("➕ Define New Financial Milestone Target", expanded=False):
+        with st.form("new_goal_form", clear_on_submit=True):
+            g_name = st.text_input("Goal Milestone Title", placeholder="e.g., Japan Autumn Vacation")
+            
+            col_f1, col_f2 = st.columns(2)
+            with col_f1:
+                g_target = st.number_input("Target Goal Amount (S$)", min_value=1.0, value=5000.0, step=100.0)
+            with col_f2:
+                g_current = st.number_input("Initial Saved Balance (S$)", min_value=0.0, value=0.0, step=50.0)
+                
+            g_icon = st.selectbox("Pick Target Display Icon", ["✈️", "🚗", "🏠", "🎓", "💻", "💰", "⌚", "💍"])
+            
+            submit_goal = st.form_submit_button("Create Target Portfolio Entry")
+            if submit_goal:
+                if g_name.strip() != "":
+                    st.session_state.goals.append({
+                        "Target": g_name.strip(),
+                        "Current": g_current,
+                        "Goal": g_target,
+                        "Icon": g_icon
+                    })
+                    st.success(f"🎉 Success! Milestone target pocket '{g_name}' is now active.")
+                    st.rerun()
+                else:
+                    st.error("Please enter a valid milestone title before submitting.")
+
+    st.markdown("### Active Tracking Ledgers")
     
-    for g in st.session_state.goals:
-        pct = min(g["Current"] / g["Goal"], 1.0)
-        st.markdown(f"### {g['Icon']} {g['Target']}")
-        st.progress(pct)
-        st.markdown(f"**Progress:** {pct*100:.1f}% (`S$ {g['Current']:,}` of `S$ {g['Goal']:,}` targets achieved)")
-        st.markdown("---")
+    # Check if any goals exist inside tracking loop arrays
+    if not st.session_state.goals:
+        st.info("No active milestones mapped. Open the expander panel above to create one!")
+    else:
+        # Iterate dynamically over editable goals collections arrays
+        for idx, g in enumerate(st.session_state.goals):
+            # Create a 2-column layout per tracking row (Left for progress visualization, Right for operations)
+            col_display, col_actions = st.columns([3, 1])
+            
+            with col_display:
+                pct = min(g["Current"] / g["Goal"], 1.0)
+                st.markdown(f"#### {g['Icon']} {g['Target']}")
+                st.progress(pct)
+                st.markdown(f"**Progress Matrix:** {pct*100:.1f}% filled (`S$ {g['Current']:,}` of `S$ {g['Goal']:,}` tracked elements achieved)")
+                
+            with col_actions:
+                # Aligns inputs down to look proportional beside progress elements
+                st.write("") 
+                amt_mod = st.number_input(f"Deposit Amount (S$)", min_value=0.0, step=50.0, key=f"add_amt_{idx}")
+                
+                # Split action column into sub-action rows to support deposit or deletion
+                btn_col1, btn_col2 = st.columns(2)
+                with btn_col1:
+                    if st.button(f"📥 Add Funds", key=f"save_btn_{idx}", use_container_width=True):
+                        if amt_mod > 0:
+                            st.session_state.goals[idx]["Current"] += amt_mod
+                            st.success(f"Deposited S$ {amt_mod}!")
+                            st.rerun()
+                with btn_col2:
+                    if st.button(f"🗑️ Delete", key=f"del_btn_{idx}", use_container_width=True):
+                        st.session_state.goals.pop(idx)
+                        st.warning("Milestone entry removed from dashboard state tracking portfolios.")
+                        st.rerun()
+                    
+            st.markdown("---")
 
 
 # 📈 VIEW LAYER: INVESTMENTS PORTFOLIO
