@@ -30,17 +30,18 @@ if "chat_history" not in st.session_state:
 
 if "transactions" not in st.session_state:
 
-    st.session_state.transactions = pd.DataFrame(
-        columns=[
-            "date",
-            "category",
-            "amount",
-            "type",
-            "split",
-            "participants",
-            "share_per_person"
-        ]
-    )
+   st.session_state.transactions = pd.DataFrame(
+    columns=[
+        "date",
+        "category",
+        "amount",
+        "type",
+        "split",
+        "participants",
+        "share_per_person",
+        "paid_by"
+    ]
+)
 
 if "splits" not in st.session_state:
     st.session_state.splits = []
