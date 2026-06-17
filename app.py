@@ -144,6 +144,10 @@ def generate_cashflow_data():
     )
 
 
+# ============================================================
+# DATA HELPERS
+# ============================================================
+
 def networth_data():
 
     return pd.DataFrame(
@@ -164,8 +168,7 @@ def networth_data():
     )
 
 
-
-    def top_expenses_data():
+def top_expenses_data():
 
     return pd.DataFrame(
         {
@@ -191,6 +194,9 @@ def calculate_balances(df):
 
     balances = {}
 
+    if len(df) == 0:
+        return balances
+
     split_df = df[df["split"] == True]
 
     for _, row in split_df.iterrows():
@@ -210,8 +216,6 @@ def calculate_balances(df):
         )
 
     return balances
-
-
 
 # ============================================================
 # NLP EXPENSE PARSER
