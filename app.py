@@ -211,29 +211,7 @@ def calculate_balances(df):
 
     return balances
 
-def calculate_balances(df):
 
-    balances = {}
-
-    split_df = df[df["split"] == True]
-
-    for _, row in split_df.iterrows():
-
-        person = row["participants"]
-
-        payer = row["paid_by"]
-
-        share = row["share_per_person"]
-
-        if person == payer:
-            continue
-
-        balances[person] = (
-            balances.get(person, 0)
-            + share
-        )
-
-    return balances
 
 # ============================================================
 # NLP EXPENSE PARSER
