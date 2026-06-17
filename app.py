@@ -9,8 +9,8 @@ import re
 # ==============================================================================
 # CONFIGURATION & THEME STYLING
 # ==============================================================================
-st.set_page_config(
-    page_title="MeraBatua" — Premium Financial Dashboard",
+st.set_page_config
+    st.title("💰 MR.MNY") 
     page_icon="📊",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -128,8 +128,8 @@ def parse_natural_language_expense(text: str):
 # SIDEBAR NAVIGATION & THEME CONTROLLER (COMPLETED WITH STEP 3)
 # ==============================================================================
 with st.sidebar:
-    st.title("💳 WalletAI")
-    st.caption("Intelligence-Driven Wealth Management")
+    st.title("💰 MR.MNY") 
+    st.caption("AI Wealth Desk")
     st.markdown("---")
     
     # Navigation Matrix
