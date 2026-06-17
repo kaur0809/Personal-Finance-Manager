@@ -162,12 +162,7 @@ if navigation_pane == "📊 Dashboard":
     st.title("Financial Dashboard")
     st.markdown(f"Welcome back, **Jayden** — here is your financial snapshot for **{datetime.now().strftime('%B %Y')}**.")
     
-    # Calculations calculated from our state dataframe
-    df_tx = st.session_state.transactions
-   total_income = st.session_state.base_monthly_income + df_tx[df_tx['Type'] == 'Income']['Amount'].sum()
-total_expenses = df_tx[df_tx['Type'] == 'Expense']['Amount'].sum()
-net_balance = total_income - total_expenses
-
+  
 # Income dynamically reflects your base settings + any manually logged side-income
 total_income = st.session_state.base_monthly_income + df_tx[df_tx['Type'] == 'Income']['Amount'].sum()
 total_expenses = df_tx[df_tx['Type'] == 'Expense']['Amount'].sum()
