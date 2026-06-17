@@ -61,12 +61,18 @@ def initialize_session_state():
             {"Target": "Save for Car Downpayment", "Current": 41620, "Goal": 60000, "Icon": "🚗"},
             {"Target": "Taiwan Trip Fund", "Current": 1800, "Goal": 2000, "Icon": "✈️"}
         ]
+# Insert these inside your initialize_session_state() block
+if 'base_monthly_income' not in st.session_state:
+    st.session_state.base_monthly_income = 5500.00
 
+if 'monthly_savings_goal' not in st.session_state:
+    st.session_state.monthly_savings_goal = 2000.00
     # Chat Log History Management
     if 'chat_history' not in st.session_state:
         st.session_state.chat_history = [
             {"role": "assistant", "content": "Hello Jayden! I'm your **WalletAI** financial assistant powered by Gemini. Ask me anything about your current spending trends, budgets, or ask me to compare categories!"}
         ]
+
 
     # Dark Mode Tracker Simulation state
     if 'dark_mode' not in st.session_state:
@@ -158,9 +164,14 @@ if navigation_pane == "📊 Dashboard":
     
     # Calculations calculated from our state dataframe
     df_tx = st.session_state.transactions
-    total_income = df_tx[df_tx['Type'] == 'Income']['Amount'].sum()
-    total_expenses = df_tx[df_tx['Type'] == 'Expense']['Amount'].sum()
-    net_balance = total_income - total_expenses
+   total_income = st.session_state.base_monthly_income + df_tx[df_tx['Type'] == 'Income']['Amount'].sum()
+total_expenses = df_tx[df_tx['Type'] == 'Expense']['Amount'].sum()
+net_balance = total_income - total_expenses
+
+# Income dynamically reflects your base settings + any manually logged side-income
+total_income = st.session_state.base_monthly_income + df_tx[df_tx['Type'] == 'Income']['Amount'].sum()
+total_expenses = df_tx[df_tx['Type'] == 'Expense']['Amount'].sum()
+net_balance = total_income - total_expenses
     
     # Top Row Metrics Layout
     m_col1, m_col2, m_col3 = st.columns(3)
