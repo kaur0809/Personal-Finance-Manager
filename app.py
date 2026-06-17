@@ -29,15 +29,21 @@ if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
 if "transactions" not in st.session_state:
-    categories = [
-        "Groceries",
-        "Dining",
-        "Coffee",
-        "Shopping",
-        "Transport",
-        "Utilities",
-        "Entertainment",
-    ]
+
+    st.session_state.transactions = pd.DataFrame(
+        columns=[
+            "date",
+            "category",
+            "amount",
+            "type",
+            "split",
+            "participants",
+            "share_per_person"
+        ]
+    )
+
+if "splits" not in st.session_state:
+    st.session_state.splits = []
 
     rows = []
 
@@ -190,33 +196,31 @@ def top_expenses_data():
 # ============================================================
 # NLP EXPENSE PARSER
 # ============================================================
+import re
+from datetime import datetime
 
 def parse_expense_text(text):
 
-    matches = re.findall(
-        r"([A-Za-z ]+?)\s*\$?(\d+(?:\.\d+)?)",
-        text,
-        re.IGNORECASE,
+    expenses = []
+
+    patterns = re.findall(
+        r'([A-Za-z ]+?)\s*\$?(\d+(?:\.\d+)?)',
+        text
     )
 
-    parsed = []
+    for category, amount in patterns:
 
-    for label, amount in matches:
+        expenses.append({
+            "date": datetime.now(),
+            "category": category.strip().title(),
+            "amount": float(amount),
+            "type": "expense",
+            "split": False,
+            "participants": "",
+            "share_per_person": None
+        })
 
-        category = label.strip().title()
-
-        if category:
-            parsed.append(
-                {
-                    "date": datetime.now(),
-                    "category": category,
-                    "amount": float(amount),
-                    "type": "expense",
-                }
-            )
-
-    return parsed
-
+    return expenses
 
 # ============================================================
 # AI ASSISTANT
