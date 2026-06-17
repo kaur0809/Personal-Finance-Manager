@@ -342,7 +342,7 @@ elif navigation_pane == "📈 Investments":
         timeline_idx = pd.date_range(end=datetime.now(), periods=12, freq='M')
         perf_mock = pd.DataFrame({
             'Timeline': timeline_idx,
-            'Portfolio Value (S$)': [50k, 52k, 51k, 55k, 58k, 62k, 60k, 65k, 70k, 72k, 74k, 76707]
+            'Portfolio Value (S$)': [50k, 52k, 51k, 55k, 58k, 62k, 60k, 65k, 70k, 72k, 74k, 76k]
         })
         fig_perf = px.area(perf_mock, x='Timeline', y='Portfolio Value (S$)', color_discrete_sequence=['#16a085'])
         st.plotly_chart(fig_perf, use_container_width=True)
