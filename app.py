@@ -9,9 +9,9 @@ import re
 # ==============================================================================
 # CONFIGURATION & THEME STYLING
 # ==============================================================================
-st.set_page_config
-    st.title("💰 MR.MNY") 
-    page_icon="📊",
+st.set_page_config(
+    page_title="MR.MNY // AI Wealth Desk",  # Updates the browser tab title
+    page_icon="💰",                         # Updates the browser tab icon
     layout="wide",
     initial_sidebar_state="expanded"
 )
