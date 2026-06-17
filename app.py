@@ -672,3 +672,41 @@ for person in st.session_state.people:
     st.write(
         f"• {person}"
     )
+st.info(
+    f"Each person pays ₹{share:.2f}"
+)
+
+if st.button(" Save Split Expense"):
+
+    if expense_name and amount > 0:
+
+        share = amount / len(participants)
+
+        rows = []
+
+        for person in participants:
+
+            rows.append({
+                "date": datetime.now(),
+                "category": expense_name,
+                "amount": share,
+                "type": "expense",
+                "split": True,
+                "participants": person,
+                "share_per_person": share,
+                "paid_by": paid_by
+            })
+
+        st.session_state.transactions = pd.concat(
+            [
+                st.session_state.transactions,
+                pd.DataFrame(rows)
+            ],
+            ignore_index=True
+        )
+
+        st.success(
+            "Split Expense Saved"
+        )
+
+        st.rerun()
