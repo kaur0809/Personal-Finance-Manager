@@ -322,15 +322,23 @@ if navigation_pane == "📊 Dashboard":
                 # 3. Call the real Gemini API
                 from google import genai
                 
-                # Automatically initializes using the GEMINI_API_KEY environment variable
-                client = genai.Client()
-                
-                response = client.models.generate_content(
-                    model='gemini-2.5-flash',
-                    contents=user_query,
-                    config={"system_instruction": system_context}
-                )
-                ai_response = response.text
+               # Replace just the try block inside your chat code with this:
+try:
+    from google import genai
+    import os
+    
+    # Check if the key is inside Streamlit Secrets first, otherwise fallback to OS environment
+    api_key = st.secrets.get("GEMINI_API_KEY", os.environ.get("GEMINI_API_KEY"))
+    
+    # Explicitly pass the key to the client initialization
+    client = genai.Client(api_key=api_key)
+    
+    response = client.models.generate_content(
+        model='gemini-2.5-flash',
+        contents=user_query,
+        config={"system_instruction": system_context}
+    )
+    ai_response = response.text
                 
             except Exception as e:
                 # Fallback graceful warning if API key is missing or invalid
