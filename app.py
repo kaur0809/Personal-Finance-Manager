@@ -320,8 +320,18 @@ if navigation_pane == "📊 Dashboard":
                 from google import genai
                 import os
                 
+                # Try getting it from secrets or environment first
                 api_key = st.secrets.get("GEMINI_API_KEY", os.environ.get("GEMINI_API_KEY"))
-                client = genai.Client(api_key=api_key)
+                
+                # DIAGNOSTIC BACKUP: If it's failing, let's see if we can manually override it
+                if not api_key or api_key == "AIzaSyYourNewCorrectKeyHere":
+                    st.error("🔑 API Key looks missing or unconfigured in your Streamlit Secrets panel.")
+                    api_key = st.text_input("Paste a fresh Google AI Studio Key to test live:", type="password")
+                
+                if not api_key:
+                    st.stop()
+                    
+                client = genai.Client(api_key=api_key.strip())
                 
                 response = client.models.generate_content(
                     model='gemini-2.5-flash',
