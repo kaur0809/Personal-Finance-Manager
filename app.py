@@ -176,7 +176,32 @@ with st.sidebar:
     if toggle_mode != st.session_state.dark_mode:
         st.session_state.dark_mode = toggle_mode
         st.rerun()
-
+# NEW FEATURE: QUICK LOG POPOVER (Accessible from all tabs)
+    with st.popover("➕ Quick Log Expense", use_container_width=True):
+        st.subheader("Fast Entry Registry")
+        with st.form("quick_log_form", clear_on_submit=True):
+            q_desc = st.text_input("Item Description", placeholder="e.g., Cold Brew Coffee")
+            col_q1, col_q2 = st.columns(2)
+            with col_q1:
+                q_amt = st.number_input("Amount (S$)", min_value=0.01, step=1.0)
+            with col_q2:
+                q_cat = st.selectbox("Category", ["Food & Dining", "Groceries", "Shopping", "Transport", "Other"])
+                
+            submit_quick = st.form_submit_button("Commit Transaction", use_container_width=True)
+            if submit_quick:
+                if q_desc.strip():
+                    new_tx = pd.DataFrame([{
+                        "Date": datetime.now().strftime("%Y-%m-%d"),
+                        "Description": q_desc.strip().capitalize(),
+                        "Category": q_cat,
+                        "Amount": float(q_amt),
+                        "Type": "Expense"
+                    }])
+                    st.session_state.transactions = pd.concat([st.session_state.transactions, new_tx], ignore_index=True)
+                    st.success("Logged instantly!")
+                    st.rerun()
+                else:
+                    st.error("Please enter a description.")
     st.markdown("---")
     st.info("💡 **Tip:** Adjusting parameters here will instantly recalculate top-row dashboard metrics rows!")
 
