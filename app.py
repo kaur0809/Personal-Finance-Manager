@@ -344,15 +344,16 @@ if navigation_pane == "📊 Dashboard":
                     "is set up in your environment variables. \n\n"
                     f"*Technical Details:* `{str(e)}`"
                 )
+# ... (your try/except block is right above this)
                 
-           with chat_container:
+            # EXACTLY 12 SPACES:
+            with chat_container:
+                # EXACTLY 16 SPACES:
                 with st.chat_message("assistant"):
                     st.write(ai_response)
                         
-            # 1. Update the persistent state history
+            # EXACTLY 12 SPACES:
             st.session_state.chat_history.append({"role": "assistant", "content": ai_response})
-            
-            # 2. FIXED: Force Streamlit to immediately redraw the container UI with the new data
             st.rerun()
 # 💸 VIEW LAYER: EXPENSES MANIPULATION
 elif navigation_pane == "💸 Expenses":
