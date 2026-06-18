@@ -344,10 +344,7 @@ if navigation_pane == "📊 Dashboard":
   # =# ==============================================================================
         # 🤖 LIVE ASSISTANT INTERFACE
         # ==============================================================================
-        st.markdown("---")
-        st.subheader("🤖 Live Assistant Interface")
-        
-        chat_container = st.container(height=400)
+       
         with chat_container:
             for msg in st.session_state.chat_history:
                 with st.chat_message(msg["role"]):
