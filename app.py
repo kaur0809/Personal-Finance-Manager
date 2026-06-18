@@ -272,7 +272,7 @@ if navigation_pane == "📊 Dashboard":
         st.info("""
             **🟢 On Track for Financial Milestone** At your current localized generation speed of cash velocity accumulation, your targeted milestone **'Save for Car Downpayment'** will complete 1.4 months early.
         """)
-  # ==============================================================================
+  # =# ==============================================================================
         # 🤖 LIVE ASSISTANT INTERFACE
         # ==============================================================================
         st.markdown("---")
