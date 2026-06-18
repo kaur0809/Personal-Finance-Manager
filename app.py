@@ -272,54 +272,80 @@ if navigation_pane == "📊 Dashboard":
         st.info("""
             **🟢 On Track for Financial Milestone** At your current localized generation speed of cash velocity accumulation, your targeted milestone **'Save for Car Downpayment'** will complete 1.4 months early.
         """)
-        
-        # Interactive Chat Assistant widget embedded inside container layout
+      # ==============================================================================
+        # 🤖 LIVE ASSISTANT INTERFACE (UPGRADED PROFESSIONAL FINANCE MANAGER)
+        # ==============================================================================
         st.markdown("---")
         st.subheader("🤖 Live Assistant Interface")
         
-        chat_container = st.container(height=350)
+        chat_container = st.container(height=400)
         with chat_container:
             for msg in st.session_state.chat_history:
                 with st.chat_message(msg["role"]):
                     st.write(msg["content"])
-                    if "chart" in msg:
-                        st.plotly_chart(msg["chart"], use_container_width=True)
                         
-        if user_query := st.chat_input("Ask WalletAI anything..."):
+        if user_query := st.chat_input("Ask MR.MNY anything about your money..."):
             with chat_container:
                 with st.chat_message("user"):
                     st.write(user_query)
             st.session_state.chat_history.append({"role": "user", "content": user_query})
             
-            # Smart Mock Engine Query Route Handler
-            norm_query = user_query.lower()
-            response_payload = {}
+            # 1. Gather live financial context from the app's current state
+            current_df = st.session_state.transactions
+            expenses_summary = ""
+            if not current_df.empty and "Type" in current_df.columns:
+                exp_df = current_df[current_df['Type'] == 'Expense']
+                if not exp_df.empty:
+                    expenses_summary = exp_df.groupby('Category')['Amount'].sum().to_string()
+
+            # 2. Build a comprehensive system prompt injecting user parameters
+            system_context = f"""
+            You are MR.MNY, an elite personal finance manager and wealth strategist.
+            The user is seeking personalized, professional financial advice. 
+
+            Here is the user's current live financial profile:
+            - Base Monthly Income: S$ {st.session_state.get('base_monthly_income', 5500):,.2f}
+            - Target Monthly Savings Goal: S$ {st.session_state.get('monthly_savings_goal', 2000):,.2f}
+            - User's Location/Currency Context: Singapore / S$ (Account for local variables if relevant, e.g., high cost of living, car costs, or CPF/tax principles if asked).
             
-            if "coffee" in norm_query:
-                coffee_sum = df_tx[df_tx['Description'].str.contains('Coffee', case=False, na=False)]['Amount'].sum()
-                response_payload["content"] = f"Checking records... You've spent a total of **S$ {coffee_sum:.2f}** on coffee items listed within the database log sequence."
-            elif "compare" in norm_query or "grocery vs dining" in norm_query:
-                response_payload["content"] = "Here is the categorical contrast distribution matrix across the requested 6-month tracking timeline:"
-                compare_df = pd.DataFrame({
-                    'Month': ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-                    'Groceries': [120, 140, 90, 110, 130, 124],
-                    'Food & Dining': [210, 185, 300, 240, 190, 835]
-                })
-                fig_comp = px.bar(compare_df, x='Month', y=['Groceries', 'Food & Dining'], barmode='group',
-                                  color_discrete_sequence=['#3498db', '#e67e22'])
-                fig_comp.update_layout(height=200, margin=dict(l=10, r=10, t=10, b=10))
-                response_payload["chart"] = fig_comp
-            else:
-                response_payload["content"] = "Understood. I will run that vector pattern optimization query across your database timeline and provide feedback metrics shortly."
+            Current tracked monthly expenses breakdown by category:
+            {expenses_summary if expenses_summary else "No expenses logged yet."}
+
+            Guidelines:
+            - Give highly specific advice using their actual numbers.
+            - If they ask 'How should I spend my money?', apply professional budgeting rules (like the 50/30/20 rule calibrated to their specific S$ {st.session_state.get('base_monthly_income', 5500)} income and their S$ {st.session_state.get('monthly_savings_goal', 2000)} savings target).
+            - Keep your tone premium, sharp, direct, and slightly witty—never sound like a rigid corporate textbook.
+            - Format your response beautifully using bolding, lists, and clear headers.
+            """
+
+            try:
+                # 3. Call the real Gemini API
+                from google import genai
+                
+                # Automatically initializes using the GEMINI_API_KEY environment variable
+                client = genai.Client()
+                
+                response = client.models.generate_content(
+                    model='gemini-2.5-flash',
+                    contents=user_query,
+                    config={"system_instruction": system_context}
+                )
+                ai_response = response.text
+                
+            except Exception as e:
+                # Fallback graceful warning if API key is missing or invalid
+                ai_response = (
+                    "⚠️ **AI Engine Connection Notice:** I'm ready to act as your personal finance manager, "
+                    "but I need a live connection to the Gemini API. Please make sure your `GEMINI_API_KEY` "
+                    "is set up in your environment variables. \n\n"
+                    f"*Technical Details:* `{str(e)}`"
+                )
                 
             with chat_container:
                 with st.chat_message("assistant"):
-                    st.write(response_payload["content"])
-                    if "chart" in response_payload:
-                        st.plotly_chart(response_payload["chart"], use_container_width=True)
+                    st.write(ai_response)
                         
-            st.session_state.chat_history.append({"role": "assistant", **response_payload})
-
+            st.session_state.chat_history.append({"role": "assistant", "content": ai_response})
 
 # 💸 VIEW LAYER: EXPENSES MANIPULATION
 elif navigation_pane == "💸 Expenses":
