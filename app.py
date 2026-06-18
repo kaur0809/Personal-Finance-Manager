@@ -272,8 +272,8 @@ if navigation_pane == "📊 Dashboard":
         st.info("""
             **🟢 On Track for Financial Milestone** At your current localized generation speed of cash velocity accumulation, your targeted milestone **'Save for Car Downpayment'** will complete 1.4 months early.
         """)
-      # ==============================================================================
-        # 🤖 LIVE ASSISTANT INTERFACE (UPGRADED PROFESSIONAL FINANCE MANAGER)
+    # ==============================================================================
+        # 🤖 LIVE ASSISTANT INTERFACE
         # ==============================================================================
         st.markdown("---")
         st.subheader("🤖 Live Assistant Interface")
@@ -290,7 +290,6 @@ if navigation_pane == "📊 Dashboard":
                     st.write(user_query)
             st.session_state.chat_history.append({"role": "user", "content": user_query})
             
-            # 1. Gather live financial context from the app's current state
             current_df = st.session_state.transactions
             expenses_summary = ""
             if not current_df.empty and "Type" in current_df.columns:
@@ -298,35 +297,30 @@ if navigation_pane == "📊 Dashboard":
                 if not exp_df.empty:
                     expenses_summary = exp_df.groupby('Category')['Amount'].sum().to_string()
 
-            # 2. Build a comprehensive system prompt injecting user parameters
             system_context = f"""
             You are MR.MNY, an elite personal finance manager and wealth strategist.
             The user is seeking personalized, professional financial advice. 
 
             Here is the user's current live financial profile:
-            - Base Monthly Income: S$ {st.session_state.get('base_monthly_income', 5500):,.2f}
-            - Target Monthly Savings Goal: S$ {st.session_state.get('monthly_savings_goal', 2000):,.2f}
-            - User's Location/Currency Context: Singapore / S$ (Account for local variables if relevant, e.g., high cost of living, car costs, or CPF/tax principles if asked).
+            - Base Monthly Income: S$ {st.session_state.base_monthly_income:,.2f}
+            - Target Monthly Savings Goal: S$ {st.session_state.monthly_savings_goal:,.2f}
+            - User's Location/Currency Context: Singapore / S$ (Account for local variables if relevant).
             
             Current tracked monthly expenses breakdown by category:
             {expenses_summary if expenses_summary else "No expenses logged yet."}
 
             Guidelines:
             - Give highly specific advice using their actual numbers.
-            - If they ask 'How should I spend my money?', apply professional budgeting rules (like the 50/30/20 rule calibrated to their specific S$ {st.session_state.get('base_monthly_income', 5500)} income and their S$ {st.session_state.get('monthly_savings_goal', 2000)} savings target).
-            - Keep your tone premium, sharp, direct, and slightly witty—never sound like a rigid corporate textbook.
+            - If they ask 'How should I spend my money?', apply professional budgeting rules (like the 50/30/20 rule calibrated to their specific S$ {st.session_state.base_monthly_income} income).
+            - Keep your tone premium, sharp, direct, and slightly witty.
             - Format your response beautifully using bolding, lists, and clear headers.
             """
 
-            # 3. Fixed try/except structural block
             try:
                 from google import genai
                 import os
                 
-                # Check secrets manager first, fallback to environment variable
                 api_key = st.secrets.get("GEMINI_API_KEY", os.environ.get("GEMINI_API_KEY"))
-                
-                # Initialize connection explicitly passing the checked token
                 client = genai.Client(api_key=api_key)
                 
                 response = client.models.generate_content(
@@ -337,22 +331,17 @@ if navigation_pane == "📊 Dashboard":
                 ai_response = response.text
                 
             except Exception as e:
-                # Fallback graceful warning if API key is missing or invalid
                 ai_response = (
                     "⚠️ **AI Engine Connection Notice:** I'm ready to act as your personal finance manager, "
                     "but I need a live connection to the Gemini API. Please make sure your `GEMINI_API_KEY` "
                     "is set up in your environment variables. \n\n"
                     f"*Technical Details:* `{str(e)}`"
                 )
-# ... (your try/except block is right above this)
                 
-            # EXACTLY 12 SPACES:
             with chat_container:
-                # EXACTLY 16 SPACES:
                 with st.chat_message("assistant"):
                     st.write(ai_response)
                         
-            # EXACTLY 12 SPACES:
             st.session_state.chat_history.append({"role": "assistant", "content": ai_response})
             st.rerun()
 # 💸 VIEW LAYER: EXPENSES MANIPULATION
