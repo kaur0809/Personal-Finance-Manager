@@ -237,9 +237,11 @@ if navigation_pane == "📊 Dashboard":
 # Core Data Visualization Grid Layout
     left_grid, right_grid = st.columns([2, 1])
     
+    # ==============================================================================
+    # 📊 LEFT COLUMN: CHARTS, EDITOR, & TRANSACTION LOGS
+    # ==============================================================================
     with left_grid:
         st.subheader("Cashflow Analytics Trend")
-        # Creating simple line trend matrix
         dates = pd.date_range(end=datetime.now(), periods=6).strftime("%Y-%m-%d").tolist()
         cashflow_mock = pd.DataFrame({
             'Date': dates,
@@ -275,38 +277,70 @@ if navigation_pane == "📊 Dashboard":
             else:
                 st.info("No recorded expenses to visualize.")
 
-        # FIXED INDENTATION: Exactly 8 spaces out from here down to keep it inside left_grid
+        st.markdown("---")
         st.subheader("Recent Transactions History Log")
         st.caption("💡 Double-click any cell to manually edit descriptions, change amounts, or override categories on the fly!")
         
-        # NEW FEATURE: LIVE DATA EDITOR
         edited_df = st.data_editor(
             df_tx.sort_values(by="Date", ascending=False),
             use_container_width=True,
-            num_rows="dynamic", # Allows users to select rows and press 'Delete' on their keyboard!
+            num_rows="dynamic",
             key="transaction_editor"
         )
         
-        # If a user changes a cell or deletes a row, update the primary state safely
         if not edited_df.equals(df_tx):
             st.session_state.transactions = edited_df
             st.rerun()
+
+    # ==============================================================================
+    # 🧠 RIGHT COLUMN: AI ASSISTANT PANEL & RUNTIME INSIGHTS
+    # ==============================================================================
+    with right_grid:
+        # Part 1: The Live Chat Interface at the Top Right
+        st.subheader("🤖 Live Assistant Interface")
         
-        # Simulated dynamic warning conditions driven by state logs
+        chat_container = st.container(height=350)
+        with chat_container:
+            for msg in st.session_state.chat_history:
+                with st.chat_message(msg["role"]):
+                    st.write(msg["content"])
+                        
+        if user_query := st.chat_input("Ask MR.MNY anything about your money..."):
+            with chat_container:
+                with st.chat_message("user"):
+                    st.write(user_query)
+            st.session_state.chat_history.append({"role": "user", "content": user_query})
+            
+            # (Your deterministic/mock logic engine handles matching here)
+            income_val = st.session_state.base_monthly_income
+            savings_target = st.session_state.monthly_savings_goal
+            spendable_cash = income_val - savings_target
+            needs_50 = income_val * 0.50
+            wants_30 = income_val * 0.30
+            savings_20 = income_val * 0.20
+            query_clean = user_query.lower()
+            
+            if any(k in query_clean for k in ['spend', 'budget', 'salary', 'income', 'money', 'how to']):
+                ai_response = f"### 📊 Your Blueprint\n* **Income:** `S$ {income_val:,.2f}`\n* **Savings Goal:** `S$ {savings_target:,.2f}`\n\n1. **Needs (50%):** `S$ {needs_50:,.2f}`\n2. **Wants (30%):** `S$ {wants_30:,.2f}`\n3. **Savings (20%):** `S$ {savings_20:,.2f}`"
+            elif any(k in query_clean for k in ['time value', 'tvm', 'value of money']):
+                ai_response = "### ⏳ Time Value of Money (TVM)\nMoney available today is worth more than the identical sum in the future due to its potential earning capacity and inflation vectors."
+            else:
+                ai_response = f"### 💼 Strategy Desk\nAnalyzing query: *\"{user_query}\"*\n* Core Envelope: **S$ {net_balance:,.2f}**\n* Running Target Metric: **S$ {savings_target:,.2f}**"
+                
+            st.session_state.chat_history.append({"role": "assistant", "content": ai_response})
+            st.rerun()
+
+        # Part 2: Automated Insights Stacked Nicely Below the Chat
+        st.markdown("---")
+        st.subheader("✨ AI Suggestions & Insights")
+        
         if total_expenses > 1500:
-            st.error("""
-                **🔴 Shopping Budget Exceeded** Your current monthly expenditure on retail items has surpassed your targeted safety boundary threshold of **S$ 1,000.00**.
-            """)
+            st.error("**🔴 Shopping Budget Exceeded** Your current monthly expenditure on retail items has surpassed your targeted safety boundary threshold of **S$ 1,000.00**.")
         else:
             st.success("**🟢 Shopping Budget Stable**\nYour spending tracks perfectly below margins.")
             
-        st.warning("""
-            **🟡 Unusual Velocity Check** An anomalous recurring entertainment charge spike was identified between 2 AM - 4 AM earlier this week. Consider reviewing automated application tracking permissions.
-        """)
-        
-        st.info("""
-            **🟢 On Track for Financial Milestone** At your current localized generation speed of cash velocity accumulation, your targeted milestone **'Save for Car Downpayment'** will complete 1.4 months early.
-        """)
+        st.warning("**🟡 Unusual Velocity Check** An anomalous recurring entertainment charge spike was identified between 2 AM - 4 AM earlier this week.")
+        st.info(f"**🟢 On Track for Financial Milestone** At your current localized cash velocity accumulation, your targeted milestone **'Save for Car Downpayment'** will complete 1.4 months early.")
   # =# ==============================================================================
         # 🤖 LIVE ASSISTANT INTERFACE
         # ==============================================================================
