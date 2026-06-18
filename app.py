@@ -234,7 +234,7 @@ if navigation_pane == "📊 Dashboard":
         
     st.markdown("---")
     
-    # Core Data Visualization Grid Layout
+# Core Data Visualization Grid Layout
     left_grid, right_grid = st.columns([2, 1])
     
     with left_grid:
@@ -275,7 +275,8 @@ if navigation_pane == "📊 Dashboard":
             else:
                 st.info("No recorded expenses to visualize.")
 
-      st.subheader("Recent Transactions History Log")
+        # FIXED INDENTATION: Exactly 8 spaces out from here down to keep it inside left_grid
+        st.subheader("Recent Transactions History Log")
         st.caption("💡 Double-click any cell to manually edit descriptions, change amounts, or override categories on the fly!")
         
         # NEW FEATURE: LIVE DATA EDITOR
