@@ -318,27 +318,23 @@ if navigation_pane == "📊 Dashboard":
             - Format your response beautifully using bolding, lists, and clear headers.
             """
 
+            # 3. Fixed try/except structural block
             try:
-                # 3. Call the real Gemini API
                 from google import genai
+                import os
                 
-               # Replace just the try block inside your chat code with this:
-try:
-    from google import genai
-    import os
-    
-    # Check if the key is inside Streamlit Secrets first, otherwise fallback to OS environment
-    api_key = st.secrets.get("GEMINI_API_KEY", os.environ.get("GEMINI_API_KEY"))
-    
-    # Explicitly pass the key to the client initialization
-    client = genai.Client(api_key=api_key)
-    
-    response = client.models.generate_content(
-        model='gemini-2.5-flash',
-        contents=user_query,
-        config={"system_instruction": system_context}
-    )
-    ai_response = response.text
+                # Check secrets manager first, fallback to environment variable
+                api_key = st.secrets.get("GEMINI_API_KEY", os.environ.get("GEMINI_API_KEY"))
+                
+                # Initialize connection explicitly passing the checked token
+                client = genai.Client(api_key=api_key)
+                
+                response = client.models.generate_content(
+                    model='gemini-2.5-flash',
+                    contents=user_query,
+                    config={"system_instruction": system_context}
+                )
+                ai_response = response.text
                 
             except Exception as e:
                 # Fallback graceful warning if API key is missing or invalid
@@ -354,7 +350,6 @@ try:
                     st.write(ai_response)
                         
             st.session_state.chat_history.append({"role": "assistant", "content": ai_response})
-
 # 💸 VIEW LAYER: EXPENSES MANIPULATION
 elif navigation_pane == "💸 Expenses":
     st.title("Expense Management & Intelligent Logging")
