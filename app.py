@@ -272,7 +272,7 @@ if navigation_pane == "📊 Dashboard":
         st.info("""
             **🟢 On Track for Financial Milestone** At your current localized generation speed of cash velocity accumulation, your targeted milestone **'Save for Car Downpayment'** will complete 1.4 months early.
         """)
-    # ==============================================================================
+  # ==============================================================================
         # 🤖 LIVE ASSISTANT INTERFACE
         # ==============================================================================
         st.markdown("---")
@@ -320,18 +320,13 @@ if navigation_pane == "📊 Dashboard":
                 from google import genai
                 import os
                 
-                # Try getting it from secrets or environment first
+                # Automatically retrieves the clean token from your background configuration
                 api_key = st.secrets.get("GEMINI_API_KEY", os.environ.get("GEMINI_API_KEY"))
                 
-                # DIAGNOSTIC BACKUP: If it's failing, let's see if we can manually override it
-                if not api_key or api_key == "AIzaSyYourNewCorrectKeyHere":
-                    st.error("🔑 API Key looks missing or unconfigured in your Streamlit Secrets panel.")
-                    api_key = st.text_input("Paste a fresh Google AI Studio Key to test live:", type="password")
-                
-                if not api_key:
-                    st.stop()
+                if api_key:
+                    api_key = api_key.strip().replace('"', '').replace("'", "")
                     
-                client = genai.Client(api_key=api_key.strip())
+                client = genai.Client(api_key=api_key)
                 
                 response = client.models.generate_content(
                     model='gemini-2.5-flash',
