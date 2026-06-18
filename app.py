@@ -345,11 +345,15 @@ if navigation_pane == "📊 Dashboard":
                     f"*Technical Details:* `{str(e)}`"
                 )
                 
-            with chat_container:
+           with chat_container:
                 with st.chat_message("assistant"):
                     st.write(ai_response)
                         
+            # 1. Update the persistent state history
             st.session_state.chat_history.append({"role": "assistant", "content": ai_response})
+            
+            # 2. FIXED: Force Streamlit to immediately redraw the container UI with the new data
+            st.rerun()
 # 💸 VIEW LAYER: EXPENSES MANIPULATION
 elif navigation_pane == "💸 Expenses":
     st.title("Expense Management & Intelligent Logging")
