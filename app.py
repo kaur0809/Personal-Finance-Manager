@@ -125,14 +125,13 @@ def parse_natural_language_expense(text: str):
     return extracted_items
 
 # ==============================================================================
-# SIDEBAR NAVIGATION & THEME CONTROLLER (COMPLETED WITH STEP 3)
+# SIDEBAR NAVIGATION & PARAMETERS CONTROLLER
 # ==============================================================================
 with st.sidebar:
-    st.title("💰 MR.MNY") 
-    st.caption("AI Wealth Desk")
+    st.title("💰 MR.MNY")
+    st.caption("AI Wealth Desk // Smart Ledger")
     st.markdown("---")
     
-    # Navigation Matrix
     navigation_pane = st.radio(
         "Navigation Menu",
         options=["📊 Dashboard", "💸 Expenses", "🎯 Goals", "📈 Investments"],
@@ -140,43 +139,8 @@ with st.sidebar:
     )
     
     st.markdown("---")
-    
-    # STEP 3: Interactive Profile Setting Expander Panel
-    with st.expander("⚙️ Adjust Profile Parameters", expanded=False):
-        st.subheader("Base Parameters")
-        
-        # Live Baseline Income Configuration Input
-        new_income = st.number_input(
-            "Base Monthly Income (S$)", 
-            min_value=0.0, 
-            value=float(st.session_state.base_monthly_income), 
-            step=100.0,
-            key="sidebar_income_input"
-        )
-        if new_income != st.session_state.base_monthly_income:
-            st.session_state.base_monthly_income = new_income
-            st.rerun()
-            
-        # Live Savings Goal Configuration Input
-        new_savings_target = st.number_input(
-            "Monthly Savings Goal (S$)", 
-            min_value=0.0, 
-            value=float(st.session_state.monthly_savings_goal), 
-            step=50.0,
-            key="sidebar_savings_input"
-        )
-        if new_savings_target != st.session_state.monthly_savings_goal:
-            st.session_state.monthly_savings_goal = new_savings_target
-            st.rerun()
-            
-    st.markdown("---")
-    # Quick Simulation Toggle for light/dark properties
-    st.subheader("Preferences")
-    toggle_mode = st.toggle("🌙 Dark Mode Aesthetic Theme", value=st.session_state.dark_mode)
-    if toggle_mode != st.session_state.dark_mode:
-        st.session_state.dark_mode = toggle_mode
-        st.rerun()
-# NEW FEATURE: QUICK LOG POPOVER (Accessible from all tabs)
+
+    # ➕ QUICK LOG POPOVER 
     with st.popover("➕ Quick Log Expense", use_container_width=True):
         st.subheader("Fast Entry Registry")
         with st.form("quick_log_form", clear_on_submit=True):
@@ -202,11 +166,60 @@ with st.sidebar:
                     st.rerun()
                 else:
                     st.error("Please enter a description.")
+
     st.markdown("---")
-    st.info("💡 **Tip:** Adjusting parameters here will instantly recalculate top-row dashboard metrics rows!")
+    
+    # ⚙️ LIVE PROFILE PARAMETERS WITH 50/30/20 BLUEPRINT CALCULATOR
+    with st.expander("⚙️ Adjust Profile Parameters", expanded=True):
+        st.subheader("Income Parameters")
+        
+        # Salary Entry Slider/Number combo
+        new_income = st.number_input(
+            "Base Monthly Income (S$)", 
+            min_value=0.0, 
+            value=float(st.session_state.base_monthly_income), 
+            step=100.0,
+            key="sidebar_income_input"
+        )
+        if new_income != st.session_state.base_monthly_income:
+            st.session_state.base_monthly_income = new_income
+            st.rerun()
+            
+        new_savings_target = st.number_input(
+            "Monthly Savings Goal (S$)", 
+            min_value=0.0, 
+            value=float(st.session_state.monthly_savings_goal), 
+            step=50.0,
+            key="sidebar_savings_input"
+        )
+        if new_savings_target != st.session_state.monthly_savings_goal:
+            st.session_state.monthly_savings_goal = new_savings_target
+            st.rerun()
+            
+        # LIVE 50/30/20 ALLOCATION CALCULATIONS
+        st.markdown("---")
+        st.markdown("### 📊 50/30/20 Target Strategy")
+        
+        calc_income = st.session_state.base_monthly_income
+        needs_alloc = calc_income * 0.50
+        wants_alloc = calc_income * 0.30
+        savings_alloc = calc_income * 0.20
+        
+        st.caption("Ideal breakdown allocation parameters:")
+        st.info(f"🏠 **Needs (50%):** S$ {needs_alloc:,.2f}")
+        st.warning(f"🛍️ **Wants (30%):** S$ {wants_alloc:,.2f}")
+        st.success(f"📈 **Savings/Invest (20%):** S$ {savings_alloc:,.2f}")
+        
+        # Added safety warning if user savings target doesn't check out mathematically
+        if st.session_state.monthly_savings_goal > savings_alloc:
+            st.caption("⚠️ *Note: Your manual savings target is set more aggressively than the standard 20% rule cushion.*")
 
-   
-
+    st.markdown("---")
+    st.subheader("Preferences")
+    toggle_mode = st.toggle("🌙 Dark Mode Aesthetic Theme", value=st.session_state.dark_mode, key="sidebar_dark_mode_toggle")
+    if toggle_mode != st.session_state.dark_mode:
+        st.session_state.dark_mode = toggle_mode
+        st.rerun()
 # ==============================================================================
 # ROUTED APPLICATION PAGES
 # ==============================================================================
