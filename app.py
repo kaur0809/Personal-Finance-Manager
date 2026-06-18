@@ -275,12 +275,21 @@ if navigation_pane == "📊 Dashboard":
             else:
                 st.info("No recorded expenses to visualize.")
 
-        # Bottom Row: Recent Transaction Tracking Log
-        st.subheader("Recent Transactions History Log")
-        st.dataframe(df_tx.sort_values(by="Date", ascending=False), use_container_width=True)
-
-    with right_grid:
-        st.subheader("✨ AI Engine Insights")
+      st.subheader("Recent Transactions History Log")
+        st.caption("💡 Double-click any cell to manually edit descriptions, change amounts, or override categories on the fly!")
+        
+        # NEW FEATURE: LIVE DATA EDITOR
+        edited_df = st.data_editor(
+            df_tx.sort_values(by="Date", ascending=False),
+            use_container_width=True,
+            num_rows="dynamic", # Allows users to select rows and press 'Delete' on their keyboard!
+            key="transaction_editor"
+        )
+        
+        # If a user changes a cell or deletes a row, update the primary state safely
+        if not edited_df.equals(df_tx):
+            st.session_state.transactions = edited_df
+            st.rerun()
         
         # Simulated dynamic warning conditions driven by state logs
         if total_expenses > 1500:
