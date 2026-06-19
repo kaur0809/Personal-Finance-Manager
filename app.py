@@ -557,22 +557,34 @@ elif navigation_pane == "🎯 Goals":
                 st.progress(pct)
                 st.markdown(f"**Progress Matrix:** {pct*100:.1f}% filled (`S$ {g['Current']:,}` of `S$ {g['Goal']:,}` tracked elements achieved)")
                 
-            with col_actions:
-                # Aligns inputs down to look proportional beside progress elements
+           with col_actions:
                 st.write("") 
-                amt_mod = st.number_input(f"Deposit Amount (S$)", min_value=0.0, step=50.0, key=f"add_amt_{idx}")
+                amt_mod = st.number_input(f"Transaction Amount (S$)", min_value=0.0, step=50.0, key=f"add_amt_{idx}")
                 
-                # Split action column into sub-action rows to support deposit or deletion
-                btn_col1, btn_col2 = st.columns(2)
+                # UPDATED: 3-Column action grid for Deposit, Withdrawal, and Deletion
+                btn_col1, btn_col2, btn_col3 = st.columns(3)
+                
                 with btn_col1:
-                    if st.button(f"📥 Add Funds", key=f"save_btn_{idx}", use_container_width=True):
+                    if st.button(f"📥 Add", key=f"save_btn_{idx}", use_container_width=True):
                         if amt_mod > 0:
                             st.session_state.goals[idx]["Current"] += amt_mod
                             st.success(f"Deposited S$ {amt_mod}!")
                             st.rerun()
+                            
                 with btn_col2:
-                    if st.button(f"🗑️ Delete", key=f"del_btn_{idx}", use_container_width=True):
-                        st.session_state.goals.pop(idx)
+                    if st.button(f"📤 Out", key=f"withdraw_btn_{idx}", use_container_width=True):
+                        if amt_mod > 0:
+                            # Safety check: prevent withdrawing more money than what actually exists in the goal pocket
+                            if amt_mod <= st.session_state.goals[idx]["Current"]:
+                                st.session_state.goals[idx]["Current"] -= amt_mod
+                                st.warning(f"Withdrew S$ {amt_mod}!")
+                                st.rerun()
+                            else:
+                                st.error("Insolvent: You cannot withdraw more than this pocket's current balance!")
+                                
+                with btn_col3:
+                    if st.button(f"🗑️", key=f"del_btn_{idx}", use_container_width=True):
+                        st.session_state.goals[idx].pop(idx)
                         st.warning("Milestone entry removed from dashboard state tracking portfolios.")
                         st.rerun()
                     
