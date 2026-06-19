@@ -557,7 +557,7 @@ elif navigation_pane == "🎯 Goals":
                 st.progress(pct)
                 st.markdown(f"**Progress Matrix:** {pct*100:.1f}% filled (`S$ {g['Current']:,}` of `S$ {g['Goal']:,}` tracked elements achieved)")
                 
-           with col_actions:
+            with col_actions:
                 st.write("") 
                 amt_mod = st.number_input(f"Transaction Amount (S$)", min_value=0.0, step=50.0, key=f"add_amt_{idx}")
                 
