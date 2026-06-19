@@ -42,7 +42,13 @@ st.markdown("""
 # DATA SIMULATION LAYER & PERSISTENT SESSION STATE
 # ==============================================================================
 def initialize_session_state():
-    # Simulated Historical Transaction Logs
+    # 1. Initialize Income Streams if not present
+    if "income_streams" not in st.session_state:
+        st.session_state.income_streams = pd.DataFrame([
+            {"Source": "Primary Salary", "Amount": 11000.0, "Frequency": "Monthly", "Type": "Salary"}
+        ])
+
+    # 2. Initialize Transaction Logs if not present
     if 'transactions' not in st.session_state:
         base_date = datetime.now()
         st.session_state.transactions = pd.DataFrame([
@@ -69,7 +75,7 @@ if 'monthly_savings_goal' not in st.session_state:
     # Chat Log History Management
     if 'chat_history' not in st.session_state:
         st.session_state.chat_history = [
-            {"role": "assistant", "content": "Hello Jayden! I'm your **WalletAI** financial assistant powered by Gemini. Ask me anything about your current spending trends, budgets, or ask me to compare categories!"}
+            {"role": "assistant", "content": "Hello Kaur! I'm your **WalletAI** financial assistant powered by Gemini. Ask me anything about your current spending trends, budgets, or ask me to compare categories!"}
         ]
 
 
@@ -169,22 +175,68 @@ with st.sidebar:
 
     st.markdown("---")
     
-    # ⚙️ LIVE PROFILE PARAMETERS WITH 50/30/20 BLUEPRINT CALCULATOR
+# ⚙️ LIVE PROFILE PARAMETERS WITH MULTI-SOURCE INCOME MANAGER
     with st.expander("⚙️ Adjust Profile Parameters", expanded=True):
-        st.subheader("Income Parameters")
+        st.subheader("💰 Income Stream Manager")
         
-        # Salary Entry Slider/Number combo
-        new_income = st.number_input(
-            "Base Monthly Income (S$)", 
-            min_value=0.0, 
-            value=float(st.session_state.base_monthly_income), 
-            step=100.0,
-            key="sidebar_income_input"
-        )
-        if new_income != st.session_state.base_monthly_income:
-            st.session_state.base_monthly_income = new_income
-            st.rerun()
+        # 1. Form to add a new income source (Placed at the top for clean workflow)
+        with st.form("add_income_form", clear_on_submit=True):
+            inc_source = st.text_input("Income Source Name", placeholder="e.g., Condo Rent, Stock Dividend")
+            col_i1, col_i2 = st.columns(2)
+            with col_i1:
+                inc_amt = st.number_input("Amount (S$)", min_value=0.0, step=100.0)
+            with col_i2:
+                inc_freq = st.selectbox("Frequency", ["Monthly", "Quarterly", "Annually"])
             
+            inc_type = st.selectbox("Source Type", ["Salary", "Rental Income", "Dividends", "Side Hustle", "Other"])
+            submit_income = st.form_submit_button("➕ Add Income Source")
+            
+            if submit_income and inc_source.strip():
+                new_inc = pd.DataFrame([{
+                    "Source": inc_source.strip().capitalize(),
+                    "Amount": float(inc_amt),
+                    "Frequency": inc_freq,
+                    "Type": inc_type
+                }])
+                st.session_state.income_streams = pd.concat([st.session_state.income_streams, new_inc], ignore_index=True)
+                st.success(f"Added {inc_source} successfully!")
+                st.rerun()
+
+        st.markdown("---")
+        st.caption("📋 Current Active Streams (Double-click any cell to edit or delete)")
+        
+        # 2. Dynamic Live Data Editor Workspace
+        edited_inc_df = st.data_editor(
+            st.session_state.income_streams,
+            use_container_width=True,
+            num_rows="dynamic",  # This allows the user to add/delete rows on the fly
+            key="income_streams_editor"
+        )
+        
+        # Safe reactive evaluation checks
+        if not edited_inc_df.equals(st.session_state.income_streams):
+            st.session_state.income_streams = edited_inc_df
+            st.rerun()  # Forces the app to instantly refresh numbers dashboard-wide
+
+        # ==============================================================================
+        # 🧮 50/30/20 CALCULATION ENGINE (NORMALIZED TO MONTHLY)
+        # ==============================================================================
+        # Calculate standardized monthly baseline income from all streams
+        total_normalized_monthly_income = 0.0
+        for _, row in st.session_state.income_streams.iterrows():
+            amt = row["Amount"]
+            freq = row["Frequency"]
+            if freq == "Monthly":
+                total_normalized_monthly_income += amt
+            elif freq == "Quarterly":
+                total_normalized_monthly_income += (amt / 3)
+            elif freq == "Annually":
+                total_normalized_monthly_income += (amt / 12)
+
+        # Sync back to base dynamic state variable for dashboard cards
+        st.session_state.base_monthly_income = total_normalized_monthly_income
+
+        st.markdown("---")
         new_savings_target = st.number_input(
             "Monthly Savings Goal (S$)", 
             min_value=0.0, 
@@ -196,24 +248,18 @@ with st.sidebar:
             st.session_state.monthly_savings_goal = new_savings_target
             st.rerun()
             
-        # LIVE 50/30/20 ALLOCATION CALCULATIONS
-        st.markdown("---")
         st.markdown("### 📊 50/30/20 Target Strategy")
+        needs_alloc = total_normalized_monthly_income * 0.50
+        wants_alloc = total_normalized_monthly_income * 0.30
+        savings_alloc = total_normalized_monthly_income * 0.20
         
-        calc_income = st.session_state.base_monthly_income
-        needs_alloc = calc_income * 0.50
-        wants_alloc = calc_income * 0.30
-        savings_alloc = calc_income * 0.20
-        
-        st.caption("Ideal breakdown allocation parameters:")
+        st.write(f"**Total Monthly Baseline:** S$ {total_normalized_monthly_income:,.2f}")
         st.info(f"🏠 **Needs (50%):** S$ {needs_alloc:,.2f}")
         st.warning(f"🛍️ **Wants (30%):** S$ {wants_alloc:,.2f}")
         st.success(f"📈 **Savings/Invest (20%):** S$ {savings_alloc:,.2f}")
         
-        # Added safety warning if user savings target doesn't check out mathematically
         if st.session_state.monthly_savings_goal > savings_alloc:
-            st.caption("⚠️ *Note: Your manual savings target is set more aggressively than the standard 20% rule cushion.*")
-
+            st.caption("⚠️ *Note: Your manual savings target outpaces the baseline 20% cushion allocations.*")
     st.markdown("---")
     st.subheader("Preferences")
     toggle_mode = st.toggle("🌙 Dark Mode Aesthetic Theme", value=st.session_state.dark_mode, key="sidebar_dark_mode_toggle")
