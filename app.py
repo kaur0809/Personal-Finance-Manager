@@ -590,28 +590,103 @@ elif navigation_pane == "🎯 Goals":
                     
             st.markdown("---")
 
-
 # 📈 VIEW LAYER: INVESTMENTS PORTFOLIO
 elif navigation_pane == "📈 Investments":
     st.title("Asset & Investment Tracking Desk")
+    st.markdown("Manage your holdings, analyze market weight allocations, and track compounding performance velocities.")
     
-    inv_col1, inv_col2 = st.columns([2, 1])
+    # 1. INITIALIZE HOLDINGS DATABASE IF NOT PRESENT
+    if "portfolio_holdings" not in st.session_state:
+        st.session_state.portfolio_holdings = pd.DataFrame([
+            {"Asset Ticker": "AAPL", "Asset Class": "Stocks", "Shares Owned": 15.0, "Avg Cost (S$)": 175.00, "Current Price (S$)": 182.40},
+            {"Asset Ticker": "NVDA", "Asset Class": "Stocks", "Shares Owned": 25.0, "Avg Cost (S$)": 450.00, "Current Price (S$)": 485.00},
+            {"Asset Ticker": "BTC-USD", "Asset Class": "Crypto", "Shares Owned": 0.45, "Avg Cost (S$)": 42000.00, "Current Price (S$)": 64000.00},
+            {"Asset Ticker": "CSPX.L", "Asset Class": "S&P 500 ETF", "Shares Owned": 8.0, "Avg Cost (S$)": 490.00, "Current Price (S$)": 525.10}
+        ])
+
+    df_p = st.session_state.portfolio_holdings
+
+    # 2. RUN REAL-TIME FINANCIAL PORTFOLIO MATH
+    if not df_p.empty:
+        df_p["Total Cost"] = df_p["Shares Owned"] * df_p["Avg Cost (S$)"]
+        df_p["Current Value"] = df_p["Shares Owned"] * df_p["Current Price (S$)"]
+        df_p["Net Profit/Loss"] = df_p["Current Value"] - df_p["Total Cost"]
+        
+        total_invested = df_p["Total Cost"].sum()
+        total_current_value = df_p["Current Value"].sum()
+        total_net_gain = total_current_value - total_invested
+        gain_percentage = (total_net_gain / total_invested * 100) if total_invested > 0 else 0.0
+    else:
+        total_invested, total_current_value, total_net_gain, gain_percentage = 0, 0, 0, 0
+
+    # 3. HIGH-END METRIC DISPLAY CARDS
+    i_col1, i_col2, i_col3 = st.columns(3)
+    with i_col1:
+        st.metric(label="Total Portfolio Value", value=f"S$ {total_current_value:,.2f}")
+    with i_col2:
+        st.metric(label="Invested Principle Capital", value=f"S$ {total_invested:,.2f}")
+    with i_col3:
+        st.metric(
+            label="All-Time Net Returns", 
+            value=f"S$ {total_net_gain:,.2f}", 
+            delta=f"{gain_percentage:+.2f}% Growth",
+            delta_color="normal" if total_net_gain >= 0 else "inverse"
+        )
+
+    st.markdown("---")
+
+    # 4. TWO-COLUMN GRID: ANALYTICS VS ASSET MANAGER
+    inv_col1, inv_col2 = st.columns([3, 2])
     
     with inv_col1:
-        st.subheader("Aggregated Performance Metric Distribution")
-        timeline_idx = pd.date_range(end=datetime.now(), periods=12, freq='ME')
+        st.subheader("📋 Live Holdings Ledger")
+        st.caption("💡 Modify your shares, average costs, or asset classes directly inside the cells below to recalculate metrics instantly.")
+        
+        # Dynamic portfolio modifier matrix
+        edited_portfolio = st.data_editor(
+            st.session_state.portfolio_holdings,
+            use_container_width=True,
+            num_rows="dynamic",
+            key="portfolio_sheet_editor"
+        )
+        if not edited_portfolio.equals(st.session_state.portfolio_holdings):
+            st.session_state.portfolio_holdings = edited_portfolio
+            st.rerun()
+
+        # Cumulative Growth Trend Analysis (Uses clean 'ME' string to avoid layout crashes)
+        st.subheader("📈 Aggregated Equity Compounding Trend")
+        timeline_idx = pd.date_range(end=datetime.now(), periods=6, freq='ME')
         perf_mock = pd.DataFrame({
             'Timeline': timeline_idx,
-            'Portfolio Value (S$)': [50000, 52000, 51000, 55000, 58000, 62000, 60000, 65000, 70000, 72000, 74000, 76000]
+            'Value Portfolio Growth (S$)': [total_current_value * 0.85, total_current_value * 0.92, total_current_value * 0.89, total_current_value * 0.96, total_current_value * 0.98, total_current_value]
         })
-        fig_perf = px.area(perf_mock, x='Timeline', y='Portfolio Value (S$)', color_discrete_sequence=['#16a085'])
+        fig_perf = px.area(perf_mock, x='Timeline', y='Value Portfolio Growth (S$)', 
+                           color_discrete_sequence=['#16a085'], template="plotly_white")
+        fig_perf.update_layout(height=240, margin=dict(l=10, r=10, t=10, b=10))
         st.plotly_chart(fig_perf, use_container_width=True)
         
     with inv_col2:
-        st.subheader("Current Target Holdings Allocation")
-        holdings = pd.DataFrame({
-            'Ticker Asset': ['BTC-USD', 'NVDA', 'TSLA', 'SPY ETF'],
-            'Weight Mapping (%)': [40, 30, 15, 15]
-        })
-        fig_holdings = px.pie(holdings, values='Weight Mapping (%)', names='Ticker Asset', color_discrete_sequence=px.colors.qualitative.Pastel)
-        st.plotly_chart(fig_holdings, use_container_width=True)
+        st.subheader("🎯 Target Asset Allocation Weighting")
+        if not df_p.empty:
+            # Aggregate weighting sums by asset category grouping boundaries
+            allocation_summary = df_p.groupby("Asset Class")["Current Value"].sum().reset_index()
+            fig_holdings = px.pie(
+                allocation_summary, 
+                values='Current Value', 
+                names='Asset Class', 
+                hole=0.4,
+                color_discrete_sequence=px.colors.qualitative.Safe
+            )
+            fig_holdings.update_layout(height=280, showlegend=True, margin=dict(l=10, r=10, t=10, b=10))
+            st.plotly_chart(fig_holdings, use_container_width=True)
+            
+            # Subheader bar for individual ticker concentrations
+            st.subheader("🎟️ Position Concentration Weights")
+            fig_ticker = px.bar(
+                df_p, x='Asset Ticker', y='Current Value',
+                color='Asset Class', color_discrete_sequence=px.colors.qualitative.Safe
+            )
+            fig_ticker.update_layout(height=200, margin=dict(l=10, r=10, t=10, b=10))
+            st.plotly_chart(fig_ticker, use_container_width=True)
+        else:
+            st.info("Add entries to the ledger to construct performance allocation charts.")
