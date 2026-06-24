@@ -459,51 +459,66 @@ if navigation_pane == "📊 Dashboard":
         # 🤖 LIVE ASSISTANT INTERFACE
         # ==============================================================================
        
-        with chat_container:
-            for msg in st.session_state.chat_history:
-                with st.chat_message(msg["role"]):
-                    st.write(msg["content"])
-                        
-       
+      if user_query := st.chat_input("Ask MR.MNY anything about your money..."):
+            with chat_container:
+                with st.chat_message("user"):
+                    st.write(user_query)
             st.session_state.chat_history.append({"role": "user", "content": user_query})
             
-            current_df = st.session_state.transactions
+            # --- PREPARE LIVE LIVE METRICS FOR DYNAMIC CONTEXT ---
+            # Calculate standardized monthly baseline income from all active streams
+            total_normalized_monthly_income = 0.0
+            for _, row in st.session_state.income_streams.iterrows():
+                amt = row["Amount"]
+                freq = row["Frequency"]
+                if freq == "Monthly":
+                    total_normalized_monthly_income += amt
+                elif freq == "Quarterly":
+                    total_normalized_monthly_income += (amt / 3)
+                elif freq == "Annually":
+                    total_normalized_monthly_income += (amt / 12)
+
             expenses_summary = ""
-            if not current_df.empty and "Type" in current_df.columns:
-                exp_df = current_df[current_df['Type'] == 'Expense']
+            if not df_tx.empty and "Type" in df_tx.columns:
+                exp_df = df_tx[df_tx['Type'] == 'Expense']
                 if not exp_df.empty:
                     expenses_summary = exp_df.groupby('Category')['Amount'].sum().to_string()
 
+            # Premium customized instruction framework
             system_context = f"""
             You are MR.MNY, an elite personal finance manager and wealth strategist.
-            The user is seeking personalized, professional financial advice. 
-
-            Here is the user's current live financial profile:
-            - Base Monthly Income: S$ {st.session_state.base_monthly_income:,.2f}
-            - Target Monthly Savings Goal: S$ {st.session_state.monthly_savings_goal:,.2f}
-            - User's Location/Currency Context: Singapore / S$ (Account for local variables if relevant).
+            
+            Here is the user's live financial tracking profile:
+            - Combined Total Monthly Income: S$ {total_normalized_monthly_income:,.2f}
+            - Manual Target Savings Goal: S$ {st.session_state.monthly_savings_goal:,.2f}
+            - Account Currency/Context: Singapore (S$)
             
             Current tracked monthly expenses breakdown by category:
             {expenses_summary if expenses_summary else "No expenses logged yet."}
 
             Guidelines:
             - Give highly specific advice using their actual numbers.
-            - If they ask 'How should I spend my money?', apply professional budgeting rules (like the 50/30/20 rule calibrated to their specific S$ {st.session_state.base_monthly_income} income).
+            - If they ask how to spend or manage money, apply professional budgeting rules (like the 50/30/20 rule calibrated directly to their specific S$ {total_normalized_monthly_income:,.2f} income).
             - Keep your tone premium, sharp, direct, and slightly witty.
-            - Format your response beautifully using bolding, lists, and clear headers.
+            - Format your response beautifully using clean markdown, lists, and bold headers.
             """
 
+            # --- LIVE ENGINE ROUTING WORKSPACE ---
             try:
                 from google import genai
                 import os
                 
-                # Automatically retrieves the clean token from your background configuration
-                api_key = st.secrets.get("GEMINI_API_KEY", os.environ.get("GEMINI_API_KEY"))
+                # Pull the raw secret string safely
+                raw_key = st.secrets.get("GEMINI_API_KEY", os.environ.get("GEMINI_API_KEY", ""))
                 
-                if api_key:
-                    api_key = api_key.strip().replace('"', '').replace("'", "")
-                    
-                client = genai.Client(api_key=api_key)
+                # SANITIZER: Instantly scrubs off any hidden copy-pasted quotation marks or spaces
+                clean_key = raw_key.strip().replace('"', '').replace("'", "") if raw_key else ""
+                
+                if not clean_key:
+                    raise ValueError("API Key string is empty or missing from configuration panels.")
+                
+                # Initialize the structured GenAI Client explicit token route
+                client = genai.Client(api_key=clean_key)
                 
                 response = client.models.generate_content(
                     model='gemini-2.5-flash',
@@ -513,17 +528,21 @@ if navigation_pane == "📊 Dashboard":
                 ai_response = response.text
                 
             except Exception as e:
-                ai_response = (
-                    "⚠️ **AI Engine Connection Notice:** I'm ready to act as your personal finance manager, "
-                    "but I need a live connection to the Gemini API. Please make sure your `GEMINI_API_KEY` "
-                    "is set up in your environment variables. \n\n"
-                    f"*Technical Details:* `{str(e)}`"
-                )
+                # Fallback to smart diagnostic response if the API is restricted or key is invalid
+                error_msg = str(e)
+                if "API_KEY_INVALID" in error_msg or "400" in error_msg:
+                    ai_response = (
+                        "⚠️ **API Key Validation Interruption:** The Google AI Studio server is receiving your token string, "
+                        "but it's rejecting it as invalid. \n\n"
+                        "**Quick Fix Steps:**\n"
+                        "1. Go to your Google AI Studio dashboard and create a **brand-new API key**.\n"
+                        "2. Make sure you copy it cleanly with no extra characters.\n"
+                        "3. Update your `.streamlit/secrets.toml` file like this: \n"
+                        "```toml\nGEMINI_API_KEY = \"AIzaSy...YourNewKey...\"\n```"
+                    )
+                else:
+                    ai_response = f"⚠️ **AI Client Connection Notice:** `{error_msg}`"
                 
-            with chat_container:
-                with st.chat_message("assistant"):
-                    st.write(ai_response)
-                        
             st.session_state.chat_history.append({"role": "assistant", "content": ai_response})
             st.rerun()
 # 💸 VIEW LAYER: EXPENSES & SPLIT MANAGEMENT
