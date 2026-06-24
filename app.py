@@ -45,7 +45,7 @@ def initialize_session_state():
     # 1. Initialize Income Streams if not present
     if "income_streams" not in st.session_state:
         st.session_state.income_streams = pd.DataFrame([
-            {"Source": "Primary Salary", "Amount": 11000.0, "Frequency": "Monthly", "Type": "Salary"}
+            {"Source": "Primary Salary", "Amount": 85000.0, "Frequency": "Monthly", "Type": "Salary"}
         ])
 
     # 2. Initialize Transaction Logs if not present
@@ -63,15 +63,15 @@ def initialize_session_state():
     # Simulated Financial Goals
     if 'goals' not in st.session_state:
         st.session_state.goals = [
-            {"Target": "Save for Car Downpayment", "Current": 41620, "Goal": 60000, "Icon": "🚗"},
-            {"Target": "Taiwan Trip Fund", "Current": 1800, "Goal": 2000, "Icon": "✈️"}
+            {"Target": "Save for Car Downpayment", "Current": 41620, "Goal": 1000000, "Icon": "🚗"},
+            {"Target": "Taiwan Trip Fund", "Current": 18000, "Goal": 200000, "Icon": "✈️"}
         ]
 # Insert these inside your initialize_session_state() block
 if 'base_monthly_income' not in st.session_state:
-    st.session_state.base_monthly_income = 5500.00
+    st.session_state.base_monthly_income = 55000.00
 
 if 'monthly_savings_goal' not in st.session_state:
-    st.session_state.monthly_savings_goal = 2000.00
+    st.session_state.monthly_savings_goal = 20000.00
     # Chat Log History Management
     if 'chat_history' not in st.session_state:
         st.session_state.chat_history = [
@@ -91,7 +91,7 @@ initialize_session_state()
 # ==============================================================================
 def parse_natural_language_expense(text: str):
     """
-    Parses natural language strings like 'Had coffee $5 and lunch $12 today'
+    Parses natural language strings like 'Had coffee ₹150 and lunch ₹500 today'
     into structured categorical transactional list objects.
     """
     extracted_items = []
@@ -153,7 +153,7 @@ with st.sidebar:
             q_desc = st.text_input("Item Description", placeholder="e.g., Cold Brew Coffee")
             col_q1, col_q2 = st.columns(2)
             with col_q1:
-                q_amt = st.number_input("Amount (S$)", min_value=0.01, step=1.0)
+                q_amt = st.number_input("Amount (₹)", min_value=0.01, step=1.0)
             with col_q2:
                 q_cat = st.selectbox("Category", ["Food & Dining", "Groceries", "Shopping", "Transport", "Other"])
                 
@@ -184,7 +184,7 @@ with st.sidebar:
             inc_source = st.text_input("Income Source Name", placeholder="e.g., Condo Rent, Stock Dividend")
             col_i1, col_i2 = st.columns(2)
             with col_i1:
-                inc_amt = st.number_input("Amount (S$)", min_value=0.0, step=100.0)
+                inc_amt = st.number_input("Amount (₹)", min_value=0.0, step=100.0)
             with col_i2:
                 inc_freq = st.selectbox("Frequency", ["Monthly", "Quarterly", "Annually"])
             
@@ -238,10 +238,10 @@ with st.sidebar:
 
         st.markdown("---")
         new_savings_target = st.number_input(
-            "Monthly Savings Goal (S$)", 
+            "Monthly Savings Goal (₹)", 
             min_value=0.0, 
             value=float(st.session_state.monthly_savings_goal), 
-            step=50.0,
+            step=500.0,
             key="sidebar_savings_input"
         )
         if new_savings_target != st.session_state.monthly_savings_goal:
@@ -444,7 +444,7 @@ if navigation_pane == "📊 Dashboard":
         st.markdown("---")
         st.subheader("✨ AI Suggestions & Insights")
         
-        if total_expenses > 1500:
+        if total_expenses > 15000:
             st.error("**🔴 Shopping Budget Exceeded** Your current monthly expenditure on retail items has surpassed your targeted safety boundary threshold of **S$ 1,000.00**.")
         else:
             st.success("**🟢 Shopping Budget Stable**\nYour spending tracks perfectly below margins.")
@@ -500,7 +500,7 @@ if navigation_pane == "📊 Dashboard":
             Here is the user's live financial tracking profile:
             - Combined Total Monthly Income: S$ {total_normalized_monthly_income:,.2f}
             - Manual Target Savings Goal: S$ {st.session_state.monthly_savings_goal:,.2f}
-            - Account Currency/Context: Singapore (S$)
+            - Account Currency/Context: Indian Rupee (₹)
             
             Current tracked monthly expenses breakdown by category:
             {expenses_summary if expenses_summary else "No expenses logged yet."}
@@ -610,12 +610,12 @@ elif navigation_pane == "💸 Expenses":
                 for person in friends_list:
                     if split_mode == "Divide Equally (50/50)":
                         person_share = total_bill / num_people
-                        shares_data.append({"Individual": person, "Owed Amount (S$)": round(person_share, 2), "Percentage Share": f"{100/num_people:.1f}%"})
+                        shares_data.append({"Individual": person, "Owed Amount (₹)": round(person_share, 2), "Percentage Share": f"{100/num_people:.1f}%"})
                     else:
                         weight = custom_weights.get(person, 0)
                         total_percentage_check += weight
                         person_share = total_bill * (weight / 100)
-                        shares_data.append({"Individual": person, "Owed Amount (S$)": round(person_share, 2), "Percentage Share": f"{weight}%"})
+                        shares_data.append({"Individual": person, "Owed Amount (₹)": round(person_share, 2), "Percentage Share": f"{weight}%"})
                 
                 # Render results table
                 shares_df = pd.DataFrame(shares_data)
@@ -662,9 +662,9 @@ elif navigation_pane == "🎯 Goals":
             
             col_f1, col_f2 = st.columns(2)
             with col_f1:
-                g_target = st.number_input("Target Goal Amount (S$)", min_value=1.0, value=5000.0, step=100.0)
+                g_target = st.number_input("Target Goal Amount (₹)", min_value=1.0, value=50000.0, step=100.0)
             with col_f2:
-                g_current = st.number_input("Initial Saved Balance (S$)", min_value=0.0, value=0.0, step=50.0)
+                g_current = st.number_input("Initial Saved Balance (₹)", min_value=0.0, value=0.0, step=500.0)
                 
             g_icon = st.selectbox("Pick Target Display Icon", ["✈️", "🚗", "🏠", "🎓", "💻", "💰", "⌚", "💍"])
             
@@ -697,11 +697,11 @@ elif navigation_pane == "🎯 Goals":
                 pct = min(g["Current"] / g["Goal"], 1.0)
                 st.markdown(f"#### {g['Icon']} {g['Target']}")
                 st.progress(pct)
-                st.markdown(f"**Progress Matrix:** {pct*100:.1f}% filled (`S$ {g['Current']:,}` of `S$ {g['Goal']:,}` tracked elements achieved)")
+                st.markdown(f"**Progress Matrix:** {pct*100:.1f}% filled (`₹ {g['Current']:,}` of `₹ {g['Goal']:,}` tracked elements achieved)")
                 
             with col_actions:
                 st.write("") 
-                amt_mod = st.number_input(f"Transaction Amount (S$)", min_value=0.0, step=50.0, key=f"add_amt_{idx}")
+                amt_mod = st.number_input(f"Transaction Amount (₹)", min_value=0.0, step=500.0, key=f"add_amt_{idx}")
                 
                 # UPDATED: 3-Column action grid for Deposit, Withdrawal, and Deletion
                 btn_col1, btn_col2, btn_col3 = st.columns(3)
@@ -719,7 +719,7 @@ elif navigation_pane == "🎯 Goals":
                             # Safety check: prevent withdrawing more money than what actually exists in the goal pocket
                             if amt_mod <= st.session_state.goals[idx]["Current"]:
                                 st.session_state.goals[idx]["Current"] -= amt_mod
-                                st.warning(f"Withdrew S$ {amt_mod}!")
+                                st.warning(f"Withdrew ₹ {amt_mod}!")
                                 st.rerun()
                             else:
                                 st.error("Insolvent: You cannot withdraw more than this pocket's current balance!")
@@ -740,18 +740,18 @@ elif navigation_pane == "📈 Investments":
     # 1. INITIALIZE HOLDINGS DATABASE IF NOT PRESENT
     if "portfolio_holdings" not in st.session_state:
         st.session_state.portfolio_holdings = pd.DataFrame([
-            {"Asset Ticker": "AAPL", "Asset Class": "Stocks", "Shares Owned": 15.0, "Avg Cost (S$)": 175.00, "Current Price (S$)": 182.40},
-            {"Asset Ticker": "NVDA", "Asset Class": "Stocks", "Shares Owned": 25.0, "Avg Cost (S$)": 450.00, "Current Price (S$)": 485.00},
-            {"Asset Ticker": "BTC-USD", "Asset Class": "Crypto", "Shares Owned": 0.45, "Avg Cost (S$)": 42000.00, "Current Price (S$)": 64000.00},
-            {"Asset Ticker": "CSPX.L", "Asset Class": "S&P 500 ETF", "Shares Owned": 8.0, "Avg Cost (S$)": 490.00, "Current Price (S$)": 525.10}
+            {"Asset Ticker": "AAPL", "Asset Class": "Stocks", "Shares Owned": 15.0, "Avg Cost (₹)": 175.00, "Current Price (₹)": 182.40},
+            {"Asset Ticker": "NVDA", "Asset Class": "Stocks", "Shares Owned": 25.0, "Avg Cost (₹)": 450.00, "Current Price (₹)": 485.00},
+            {"Asset Ticker": "BTC-USD", "Asset Class": "Crypto", "Shares Owned": 0.45, "Avg Cost (₹)": 42000.00, "Current Price (₹)": 64000.00},
+            {"Asset Ticker": "CSPX.L", "Asset Class": "S&P 500 ETF", "Shares Owned": 8.0, "Avg Cost (₹)": 490.00, "Current Price (₹)": 525.10}
         ])
 
     df_p = st.session_state.portfolio_holdings
 
     # 2. RUN REAL-TIME FINANCIAL PORTFOLIO MATH
     if not df_p.empty:
-        df_p["Total Cost"] = df_p["Shares Owned"] * df_p["Avg Cost (S$)"]
-        df_p["Current Value"] = df_p["Shares Owned"] * df_p["Current Price (S$)"]
+        df_p["Total Cost"] = df_p["Shares Owned"] * df_p["Avg Cost (₹)"]
+        df_p["Current Value"] = df_p["Shares Owned"] * df_p["Current Price (₹)"]
         df_p["Net Profit/Loss"] = df_p["Current Value"] - df_p["Total Cost"]
         
         total_invested = df_p["Total Cost"].sum()
@@ -800,9 +800,9 @@ elif navigation_pane == "📈 Investments":
         timeline_idx = pd.date_range(end=datetime.now(), periods=6, freq='ME')
         perf_mock = pd.DataFrame({
             'Timeline': timeline_idx,
-            'Value Portfolio Growth (S$)': [total_current_value * 0.85, total_current_value * 0.92, total_current_value * 0.89, total_current_value * 0.96, total_current_value * 0.98, total_current_value]
+            'Value Portfolio Growth (₹)': [total_current_value * 0.85, total_current_value * 0.92, total_current_value * 0.89, total_current_value * 0.96, total_current_value * 0.98, total_current_value]
         })
-        fig_perf = px.area(perf_mock, x='Timeline', y='Value Portfolio Growth (S$)', 
+        fig_perf = px.area(perf_mock, x='Timeline', y='Value Portfolio Growth (₹)', 
                            color_discrete_sequence=['#16a085'], template="plotly_white")
         fig_perf.update_layout(height=240, margin=dict(l=10, r=10, t=10, b=10))
         st.plotly_chart(fig_perf, use_container_width=True)
@@ -853,7 +853,7 @@ elif navigation_pane == "🧮 Calculators":
         col_s1, col_s2 = st.columns([1, 2])
         
         with col_s1:
-            sip_monthly = st.number_input("Monthly SIP Contribution (S$)", min_value=10, value=500, step=50, key="sip_m_input")
+            sip_monthly = st.number_input("Monthly SIP Contribution (₹)", min_value=10, value=500, step=50, key="sip_m_input")
             sip_rate = st.slider("Expected Annual Return Rate (%)", min_value=1.0, max_value=25.0, value=12.0, step=0.5, key="sip_r_slider")
             sip_years = st.slider("Investment Horizon (Years)", min_value=1, max_value=40, value=10, step=1, key="sip_y_slider")
             
@@ -871,11 +871,11 @@ elif navigation_pane == "🧮 Calculators":
             # Display results in high-end structural summary metric columns
             sm_col1, sm_col2, sm_col3 = st.columns(3)
             with sm_col1:
-                st.metric("Total Invested Principle", f"S$ {total_invested_sip:,.0f}")
+                st.metric("Total Invested Principle", f"₹ {total_invested_sip:,.0f}")
             with sm_col2:
-                st.metric("Estimated Wealth Gain", f"S$ {wealth_gained_sip:,.0f}")
+                st.metric("Estimated Wealth Gain", f"₹ {wealth_gained_sip:,.0f}")
             with sm_col3:
-                st.metric("Total Target Wealth", f"S$ {future_value_sip:,.0f}")
+                st.metric("Total Target Wealth", f"₹ {future_value_sip:,.0f}")
                 
             # Render a beautiful visual breakdown pie chart
             sip_pie_df = pd.DataFrame({
@@ -897,7 +897,7 @@ elif navigation_pane == "🧮 Calculators":
         col_e1, col_e2 = st.columns([1, 2])
         
         with col_e1:
-            loan_principle = st.number_input("Principal Loan Amount (S$)", min_value=1000, value=50000, step=5000, key="emi_p_input")
+            loan_principle = st.number_input("Principal Loan Amount (₹)", min_value=10000, value=50000, step=5000, key="emi_p_input")
             loan_rate = st.slider("Interest Rate (Annual %)", min_value=0.5, max_value=15.0, value=3.5, step=0.1, key="emi_r_slider")
             loan_years = st.slider("Loan Tenure (Years)", min_value=1, max_value=30, value=5, step=1, key="emi_y_slider")
             
@@ -919,11 +919,11 @@ elif navigation_pane == "🧮 Calculators":
             # Display metrics panel
             em_col1, em_col2, em_col3 = st.columns(3)
             with em_col1:
-                st.metric("Monthly EMI Outflow", f"S$ {monthly_emi:,.2f}")
+                st.metric("Monthly EMI Outflow", f"₹ {monthly_emi:,.2f}")
             with em_col2:
-                st.metric("Principal Loan Amount", f"S$ {loan_principle:,.0f}")
+                st.metric("Principal Loan Amount", f"₹ {loan_principle:,.0f}")
             with em_col3:
-                st.metric("Total Interest Outlay", f"S$ {total_interest_payable:,.0f}")
+                st.metric("Total Interest Outlay", f"₹ {total_interest_payable:,.0f}")
                 
             # Render visual debt allocation breakdown pie chart
             emi_pie_df = pd.DataFrame({
@@ -937,7 +937,7 @@ elif navigation_pane == "🧮 Calculators":
             
             # Budget Integration Check Statement
             st.markdown("---")
-            if monthly_emi > (st.session_state.get('base_monthly_income', 5500) * 0.50):
+            if monthly_emi > (st.session_state.get('base_monthly_income', 85000) * 0.50):
                 st.error(f"⚠️ **High Risk Outflow Warning:** This single EMI liability (S$ {monthly_emi:,.2f}) swallows up more than **50%** of your active monthly income profile standard boundaries. Proceed with caution!")
             else:
-                st.success(f"🟢 **Safe Boundary Validation:** This EMI liability accounts for {(monthly_emi / st.session_state.get('base_monthly_income', 5500) * 100):.1f}% of your dynamic income pool, mapping safely within regular risk indices.")
+                st.success(f"🟢 **Safe Boundary Validation:** This EMI liability accounts for {(monthly_emi / st.session_state.get('base_monthly_income', 85000) * 100):.1f}% of your dynamic income pool, mapping safely within regular risk indices.")
