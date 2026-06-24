@@ -138,7 +138,7 @@ with st.sidebar:
     st.caption("AI Wealth Desk // Smart Ledger")
     st.markdown("---")
     
-  navigation_pane = st.radio(
+    navigation_pane = st.radio(
         "Navigation Menu",
         options=["📊 Dashboard", "💸 Expenses", "🎯 Goals", "📈 Investments", "🧮 Calculators"],
         index=0
