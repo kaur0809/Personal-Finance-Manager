@@ -138,9 +138,9 @@ with st.sidebar:
     st.caption("AI Wealth Desk // Smart Ledger")
     st.markdown("---")
     
-    navigation_pane = st.radio(
+  navigation_pane = st.radio(
         "Navigation Menu",
-        options=["📊 Dashboard", "💸 Expenses", "🎯 Goals", "📈 Investments"],
+        options=["📊 Dashboard", "💸 Expenses", "🎯 Goals", "📈 Investments", "🧮 Calculators"],
         index=0
     )
     
@@ -690,3 +690,112 @@ elif navigation_pane == "📈 Investments":
             st.plotly_chart(fig_ticker, use_container_width=True)
         else:
             st.info("Add entries to the ledger to construct performance allocation charts.")
+
+
+
+# 🧮 VIEW LAYER: MATH CALCULATORS (EMI & SIP)
+elif navigation_pane == "🧮 Calculators":
+    st.title("Financial Planning Calculators")
+    st.markdown("Run scenarios for future investments or analyze debt liability structures.")
+    
+    # Create two clean, spacious layout tabs
+    tab_sip, tab_emi = st.tabs(["📈 SIP Wealth Accumulator", "🚗/🏠 EMI Loan Planner"])
+    
+    # ==============================================================================
+    # 📈 TAB 1: SYSTEMATIC INVESTMENT PLAN (SIP) CALCULATOR
+    # ==============================================================================
+    with tab_sip:
+        st.subheader("Systematic Investment Plan (SIP) Compounder")
+        st.write("Calculate how much wealth you can accumulate over time with regular monthly contributions.")
+        
+        col_s1, col_s2 = st.columns([1, 2])
+        
+        with col_s1:
+            sip_monthly = st.number_input("Monthly SIP Contribution (S$)", min_value=10, value=500, step=50, key="sip_m_input")
+            sip_rate = st.slider("Expected Annual Return Rate (%)", min_value=1.0, max_value=25.0, value=12.0, step=0.5, key="sip_r_slider")
+            sip_years = st.slider("Investment Horizon (Years)", min_value=1, max_value=40, value=10, step=1, key="sip_y_slider")
+            
+            # SIP Formula Logic
+            # Formula: M = P * [((1 + i)^n - 1) / i] * (1 + i)
+            # where i = monthly return rate, n = total months
+            i = (sip_rate / 100) / 12
+            n = sip_years * 12
+            
+            total_invested_sip = sip_monthly * n
+            future_value_sip = sip_monthly * (((1 + i)**n - 1) / i) * (1 + i)
+            wealth_gained_sip = future_value_sip - total_invested_sip
+            
+        with col_s2:
+            # Display results in high-end structural summary metric columns
+            sm_col1, sm_col2, sm_col3 = st.columns(3)
+            with sm_col1:
+                st.metric("Total Invested Principle", f"S$ {total_invested_sip:,.0f}")
+            with sm_col2:
+                st.metric("Estimated Wealth Gain", f"S$ {wealth_gained_sip:,.0f}")
+            with sm_col3:
+                st.metric("Total Target Wealth", f"S$ {future_value_sip:,.0f}")
+                
+            # Render a beautiful visual breakdown pie chart
+            sip_pie_df = pd.DataFrame({
+                "Component": ["Invested Capital", "Compounded Returns"],
+                "Amount": [total_invested_sip, wealth_gained_sip]
+            })
+            fig_sip = px.pie(sip_pie_df, values="Amount", names="Component", hole=0.4,
+                             color_discrete_sequence=["#1abc9c", "#2c3e50"], template="plotly_white")
+            fig_sip.update_layout(height=240, margin=dict(l=10, r=10, t=10, b=10))
+            st.plotly_chart(fig_sip, use_container_width=True)
+
+    # ==============================================================================
+    # 🚗/🏠 TAB 2: EQUATED MONTHLY INSTALLMENT (EMI) CALCULATOR
+    # ==============================================================================
+    with tab_emi:
+        st.subheader("Equated Monthly Installment (EMI) Debt Planner")
+        st.write("Determine your structural monthly payment liabilities for home, car, or personal loans.")
+        
+        col_e1, col_e2 = st.columns([1, 2])
+        
+        with col_e1:
+            loan_principle = st.number_input("Principal Loan Amount (S$)", min_value=1000, value=50000, step=5000, key="emi_p_input")
+            loan_rate = st.slider("Interest Rate (Annual %)", min_value=0.5, max_value=15.0, value=3.5, step=0.1, key="emi_r_slider")
+            loan_years = st.slider("Loan Tenure (Years)", min_value=1, max_value=30, value=5, step=1, key="emi_y_slider")
+            
+            # Standard Reducing Balance EMI Formula Logic
+            # Formula: EMI = [P * r * (1 + r)^n] / [((1 + r)^n) - 1]
+            # where r = monthly interest rate, n = total tenure months
+            r = (loan_rate / 100) / 12
+            num_months = loan_years * 12
+            
+            if r > 0:
+                monthly_emi = (loan_principle * r * (1 + r)**num_months) / (((1 + r)**num_months) - 1)
+            else:
+                monthly_emi = loan_principle / num_months
+                
+            total_repayment = monthly_emi * num_months
+            total_interest_payable = total_repayment - loan_principle
+            
+        with col_e2:
+            # Display metrics panel
+            em_col1, em_col2, em_col3 = st.columns(3)
+            with em_col1:
+                st.metric("Monthly EMI Outflow", f"S$ {monthly_emi:,.2f}")
+            with em_col2:
+                st.metric("Principal Loan Amount", f"S$ {loan_principle:,.0f}")
+            with em_col3:
+                st.metric("Total Interest Outlay", f"S$ {total_interest_payable:,.0f}")
+                
+            # Render visual debt allocation breakdown pie chart
+            emi_pie_df = pd.DataFrame({
+                "Component": ["Principal Capital", "Interest Liability"],
+                "Amount": [loan_principle, total_interest_payable]
+            })
+            fig_emi = px.pie(emi_pie_df, values="Amount", names="Component", hole=0.4,
+                             color_discrete_sequence=["#e74c3c", "#34495e"], template="plotly_white")
+            fig_emi.update_layout(height=240, margin=dict(l=10, r=10, t=10, b=10))
+            st.plotly_chart(fig_emi, use_container_width=True)
+            
+            # Budget Integration Check Statement
+            st.markdown("---")
+            if monthly_emi > (st.session_state.get('base_monthly_income', 5500) * 0.50):
+                st.error(f"⚠️ **High Risk Outflow Warning:** This single EMI liability (S$ {monthly_emi:,.2f}) swallows up more than **50%** of your active monthly income profile standard boundaries. Proceed with caution!")
+            else:
+                st.success(f"🟢 **Safe Boundary Validation:** This EMI liability accounts for {(monthly_emi / st.session_state.get('base_monthly_income', 5500) * 100):.1f}% of your dynamic income pool, mapping safely within regular risk indices.")
