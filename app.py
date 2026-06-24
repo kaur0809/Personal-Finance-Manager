@@ -459,7 +459,16 @@ if navigation_pane == "📊 Dashboard":
         # 🤖 LIVE ASSISTANT INTERFACE
         # ==============================================================================
        
-      if user_query := st.chat_input("Ask MR.MNY anything about your money..."):
+     # Ensure this entire section sits inside your right_grid column!
+    with right_grid:
+        st.subheader("🤖 MR.MNY AI Copilot")
+        
+        # (Your chat history container code lives here, indented 8 spaces)
+        
+        # ==============================================================================
+        # 🤖 LIVE ASSISTANT INTERFACE (FIXED INDENTATION)
+        # ==============================================================================
+        if user_query := st.chat_input("Ask MR.MNY anything about your money..."):
             with chat_container:
                 with st.chat_message("user"):
                     st.write(user_query)
