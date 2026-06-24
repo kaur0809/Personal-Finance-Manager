@@ -10,7 +10,7 @@ import re
 # CONFIGURATION & THEME STYLING
 # ==============================================================================
 st.set_page_config(
-    page_title="MR.MNY // AI Wealth Desk",  # Updates the browser tab title
+    page_title="MR.MNY",  # Updates the browser tab title
     page_icon="💰",                         # Updates the browser tab icon
     layout="wide",
     initial_sidebar_state="expanded"
@@ -135,7 +135,7 @@ def parse_natural_language_expense(text: str):
 # ==============================================================================
 with st.sidebar:
     st.title("💰 MR.MNY")
-    st.caption("AI Wealth Desk // Smart Ledger")
+    st.caption("AI Wealth Desk ")
     st.markdown("---")
     
     navigation_pane = st.radio(
@@ -409,10 +409,7 @@ if navigation_pane == "📊 Dashboard":
                 with st.chat_message(msg["role"]):
                     st.write(msg["content"])
                         
-        if user_query := st.chat_input("Ask MR.MNY anything about your money..."):
-            with chat_container:
-                with st.chat_message("user"):
-                    st.write(user_query)
+       
             st.session_state.chat_history.append({"role": "user", "content": user_query})
             
             current_df = st.session_state.transactions
