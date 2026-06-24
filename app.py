@@ -300,18 +300,41 @@ if navigation_pane == "📊 Dashboard":
     # 📊 LEFT COLUMN: CHARTS, EDITOR, & TRANSACTION LOGS
     # ==============================================================================
     with left_grid:
-        st.subheader("Cashflow Analytics Trend")
-        dates = pd.date_range(end=datetime.now(), periods=6).strftime("%Y-%m-%d").tolist()
-        cashflow_mock = pd.DataFrame({
-            'Date': dates,
-            'Income': [5500, 5500, 5500, 5500, 5500, 5500],
-            'Expenses': [1420, 1650, 1200, 1980, 1540, float(total_expenses)]
-        })
-        fig_cf = px.line(cashflow_mock, x='Date', y=['Income', 'Expenses'], 
-                         color_discrete_sequence=['#2ecc71', '#e74c3c'], template="plotly_white")
-        fig_cf.update_layout(height=320, margin=dict(l=20, r=20, t=10, b=10))
-        st.plotly_chart(fig_cf, use_container_width=True)
+        # ==============================================================================
+        # 📊 NEW DYNAMIC EXPENSE CATEGORY BREAKDOWN (REPLACES LINE CHART)
+        # ==============================================================================
+        st.subheader("Monthly Expense Allocation by Category")
         
+        expense_only = df_tx[df_tx['Type'] == 'Expense']
+        
+        if not expense_only.empty:
+            # Group actual transactions by category and sum them up cleanly
+            cat_summary = expense_only.groupby('Category')['Amount'].sum().reset_index()
+            
+            # Create a beautiful, scannable horizontal bar chart
+            fig_cat_main = px.bar(
+                cat_summary.sort_values(by="Amount", ascending=True), 
+                x='Amount', 
+                y='Category', 
+                orientation='h',
+                text='Amount',
+                color='Amount', 
+                color_continuous_scale='Oranges',
+                template="plotly_dark" if st.session_state.dark_mode else "plotly_white"
+            )
+            
+            # Format numbers cleanly on top of the bars
+            fig_cat_main.update_traces(texttemplate='S$ %{text:,.2f}', textposition='outside')
+            fig_cat_main.update_layout(
+                height=300, 
+                coloraxis_showscale=False, 
+                xaxis_title="Total Spent (S$)",
+                yaxis_title=None,
+                margin=dict(l=20, r=40, t=10, b=10)
+            )
+            st.plotly_chart(fig_cat_main, use_container_width=True)
+        else:
+            st.info("💡 No expenses recorded yet. Use the sidebar 'Quick Log' to see your category weights populate here!")
         col_bl, col_br = st.columns(2)
         with col_bl:
             st.subheader("Net Worth Breakdown")
@@ -355,6 +378,34 @@ if navigation_pane == "📊 Dashboard":
     # 🧠 RIGHT COLUMN: AI ASSISTANT PANEL & RUNTIME INSIGHTS
     # ==============================================================================
     with right_grid:
+        # Part 3: Market Wisdom Corner (Right Corner Placement)
+        st.markdown("---")
+        st.markdown("### 🏛️ Market Wisdom Corner")
+        
+        # A curated matrix of professional finance & risk quotes
+        quotes_pool = [
+            {"quote": "The individual investor should act consistently as an investor and not as a speculator.", "author": "Benjamin Graham"},
+            {"quote": "Do not save what is left after spending, but spend what is left after saving.", "author": "Warren Buffett"},
+            {"quote": "In investing, what is comfortable is rarely profitable.", "author": "Robert Arnott"},
+            {"quote": "The four most dangerous words in investing are: 'This time it's different.'", "author": "Sir John Templeton"},
+            {"quote": "An investment in knowledge pays the best interest.", "author": "Benjamin Franklin"},
+            {"quote": "Time is your friend; impulse is your enemy. Take advantage of compounding.", "author": "John Bogle"}
+        ]
+        
+        # Smart runtime rotator: uses the current calendar day to automatically cycle the quote 
+        # so you see a fresh, premium piece of wisdom every single day you log in.
+        import datetime
+        current_day_index = datetime.datetime.now().day % len(quotes_pool)
+        selected_insight = quotes_pool[current_day_index]
+        
+        # Render the selected quote inside a sleek callout block structure
+        st.markdown(f"""
+            > "{selected_insight['quote']}"  
+            > — ***{selected_insight['author']}***
+        """)
+
+
+        
         # Part 1: The Live Chat Interface at the Top Right
         st.subheader("🤖 Live Assistant Interface")
         
@@ -400,6 +451,10 @@ if navigation_pane == "📊 Dashboard":
             
         st.warning("**🟡 Unusual Velocity Check** An anomalous recurring entertainment charge spike was identified between 2 AM - 4 AM earlier this week.")
         st.info(f"**🟢 On Track for Financial Milestone** At your current localized cash velocity accumulation, your targeted milestone **'Save for Car Downpayment'** will complete 1.4 months early.")
+
+
+
+        
   # =# ==============================================================================
         # 🤖 LIVE ASSISTANT INTERFACE
         # ==============================================================================
