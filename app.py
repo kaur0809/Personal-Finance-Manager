@@ -26,7 +26,7 @@ st.markdown("""
     }
     /* Sleek container styles mimicking modern card layouts */
     div[data-testid="stVerticalBlock"] > div:has(div.metric-card) {
-        background-color: #f8f9fa;
+        background-color: #F4F1EA;
         border-radius: 12px;
         padding: 1.25rem;
         border: 1px solid #e9ecef;
@@ -253,10 +253,10 @@ with st.sidebar:
         wants_alloc = total_normalized_monthly_income * 0.30
         savings_alloc = total_normalized_monthly_income * 0.20
         
-        st.write(f"**Total Monthly Baseline:** S$ {total_normalized_monthly_income:,.2f}")
-        st.info(f"🏠 **Needs (50%):** S$ {needs_alloc:,.2f}")
-        st.warning(f"🛍️ **Wants (30%):** S$ {wants_alloc:,.2f}")
-        st.success(f"📈 **Savings/Invest (20%):** S$ {savings_alloc:,.2f}")
+        st.write(f"**Total Monthly Baseline:** ₹ {total_normalized_monthly_income:,.2f}")
+        st.info(f"🏠 **Needs (50%):** ₹ {needs_alloc:,.2f}")
+        st.warning(f"🛍️ **Wants (30%):** ₹ {wants_alloc:,.2f}")
+        st.success(f"📈 **Savings/Invest (20%):** ₹ {savings_alloc:,.2f}")
         
         if st.session_state.monthly_savings_goal > savings_alloc:
             st.caption("⚠️ *Note: Your manual savings target outpaces the baseline 20% cushion allocations.*")
@@ -285,11 +285,11 @@ if navigation_pane == "📊 Dashboard":
     # EXACTLY 4 SPACES INFRONT OF THIS LINE:
     m_col1, m_col2, m_col3 = st.columns(3)
     with m_col1:
-        st.metric(label="Income", value=f"S$ {total_income:,.2f}", delta="+3.5% vs last month")
+        st.metric(label="Income", value=f"₹ {total_income:,.2f}", delta="+3.5% vs last month")
     with m_col2:
-        st.metric(label="Expenses", value=f"S$ {total_expenses:,.2f}", delta=f"-S$ {total_expenses:,.2f}", delta_color="inverse")
+        st.metric(label="Expenses", value=f"₹ {total_expenses:,.2f}", delta=f"-₹ {total_expenses:,.2f}", delta_color="inverse")
     with m_col3:
-        st.metric(label="Balance", value=f"S$ {net_balance:,.2f}", delta="+12.4% net positive change")
+        st.metric(label="Balance", value=f"₹ {net_balance:,.2f}", delta="+12.4% net positive change")
         
     st.markdown("---")
     
@@ -324,11 +324,11 @@ if navigation_pane == "📊 Dashboard":
             )
             
             # Format numbers cleanly on top of the bars
-            fig_cat_main.update_traces(texttemplate='S$ %{text:,.2f}', textposition='outside')
+            fig_cat_main.update_traces(texttemplate='₹' %{text:,.2f}', textposition='outside')
             fig_cat_main.update_layout(
                 height=300, 
                 coloraxis_showscale=False, 
-                xaxis_title="Total Spent (S$)",
+                xaxis_title="Total Spent (₹)",
                 yaxis_title=None,
                 margin=dict(l=20, r=40, t=10, b=10)
             )
