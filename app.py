@@ -324,7 +324,7 @@ if navigation_pane == "📊 Dashboard":
             )
             
             # Format numbers cleanly on top of the bars
-            fig_cat_main.update_traces(texttemplate='₹' %{text:,.2f}', textposition='outside')
+            fig_cat_main.update_traces(texttemplate='₹%{text:,.2f}', textposition='outside')
             fig_cat_main.update_layout(
                 height=300, 
                 coloraxis_showscale=False, 
