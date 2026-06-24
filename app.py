@@ -262,7 +262,7 @@ with st.sidebar:
             st.caption("⚠️ *Note: Your manual savings target outpaces the baseline 20% cushion allocations.*")
     st.markdown("---")
     st.subheader("Preferences")
-    toggle_mode = st.toggle("🌙 Dark Mode Aesthetic Theme", value=st.session_state.dark_mode, key="sidebar_dark_mode_toggle")
+    toggle_mode = st.toggle("🌙 Dark Mode", value=st.session_state.dark_mode, key="sidebar_dark_mode_toggle")
     if toggle_mode != st.session_state.dark_mode:
         st.session_state.dark_mode = toggle_mode
         st.rerun()
@@ -474,38 +474,100 @@ if navigation_pane == "📊 Dashboard":
                         
             st.session_state.chat_history.append({"role": "assistant", "content": ai_response})
             st.rerun()
-# 💸 VIEW LAYER: EXPENSES MANIPULATION
+# 💸 VIEW LAYER: EXPENSES & SPLIT MANAGEMENT
 elif navigation_pane == "💸 Expenses":
-    st.title("Expense Management & Intelligent Logging")
+    st.title("Expense Management & Shared Splits")
+    st.markdown("Track individual outlays or calculate shared bill breakdowns with companions.")
     
-    col_l, col_r = st.columns([1, 1])
+    # Split the view cleanly into two strategic tabs
+    tab_log, tab_split = st.tabs(["📋 Individual Expense Log", "👥 Split Bills Manager"])
     
-    with col_l:
-        st.subheader("Natural Language AI Log Engine")
-        st.write("Type naturally to instantly add structured database entries.")
+    # ==============================================================================
+    # TAB 1: YOUR EXISTING INDIVIDUAL EXPENSE LOG
+    # ==============================================================================
+    with tab_log:
+        st.subheader("Personal Ledger Overview")
+        # (Paste your existing code here that displays st.data_editor or tables for regular transactions)
+        st.write(st.session_state.transactions)
+
+    # ==============================================================================
+    # 👥 TAB 2: BRAND NEW BILL SPLIT ENGINE
+    # ==============================================================================
+    with tab_split:
+        st.subheader("Shared Group Bill Splitter")
+        st.write("Divide group tabs evenly or assign custom debt liabilities between friends.")
         
-        sample_input = "Had coffee $5 and lunch $12 today"
-        user_text_expense = st.text_input(
-            "Describe purchase statement entry:",
-            placeholder=f"e.g., {sample_input}"
-        )
+        # Grid input setup
+        col_sp1, col_sp2 = st.columns([1, 1])
         
-        if st.button("✨ Parse and Commit Transaction", type="primary"):
-            if user_text_expense:
-                parsed_records = parse_natural_language_expense(user_text_expense)
-                for record in parsed_records:
-                    new_row = pd.DataFrame([record])
-                    st.session_state.transactions = pd.concat([st.session_state.transactions, new_row], ignore_index=True)
-                st.success(f"Successfully processed {len(parsed_records)} data rows into session storage ledger!")
-                st.balloons()
-            else:
-                st.warning("Please type a descriptive tracking entry string sentence first.")
+        with col_sp1:
+            with st.form("bill_splitter_form", clear_on_submit=False):
+                bill_title = st.text_input("Bill Name / Description", placeholder="e.g., Shatabdi Train Tickets, Group Dinner")
+                total_bill = st.number_input("Total Invoice Amount (S$)", min_value=0.0, value=0.0, step=10.0)
                 
-    with col_r:
-        st.subheader("Current Core Transaction Registry")
-        st.dataframe(st.session_state.transactions, use_container_width=True)
+                # Input list of people splitting the expense
+                people_raw = st.text_input("Companions (Comma separated)", value="You, Inderpreet, Parampreet, Bhavika")
+                friends_list = [p.strip() for p in people_raw.split(",") if p.strip()]
+                num_people = len(friends_list)
+                
+                split_mode = st.radio("Splitting Strategy Matrix", ["Divide Equally (50/50)", "Custom Percentages Matrix"])
+                
+                custom_weights = {}
+                if split_mode == "Custom Percentages Matrix" and num_people > 0:
+                    st.caption("🔧 Allocate exact integer weight percentages per individual (Must equal 100%):")
+                    for person in friends_list:
+                        custom_weights[person] = st.number_input(f"{person}'s Weight share (%)", min_value=0, max_value=100, value=int(100/num_people), step=5)
+                
+                submit_split = st.form_submit_button("🧮 Compute Split Share")
 
-
+        with col_sp2:
+            if total_bill > 0 and num_people > 0:
+                st.subheader("📋 Final Settlement Matrix")
+                
+                shares_data = []
+                total_percentage_check = 0
+                
+                for person in friends_list:
+                    if split_mode == "Divide Equally (50/50)":
+                        person_share = total_bill / num_people
+                        shares_data.append({"Individual": person, "Owed Amount (S$)": round(person_share, 2), "Percentage Share": f"{100/num_people:.1f}%"})
+                    else:
+                        weight = custom_weights.get(person, 0)
+                        total_percentage_check += weight
+                        person_share = total_bill * (weight / 100)
+                        shares_data.append({"Individual": person, "Owed Amount (S$)": round(person_share, 2), "Percentage Share": f"{weight}%"})
+                
+                # Render results table
+                shares_df = pd.DataFrame(shares_data)
+                st.dataframe(shares_df, use_container_width=True, hide_index=True)
+                
+                # Safety check for custom percentages alignment
+                if split_mode == "Custom Percentages Matrix" and total_percentage_check != 100:
+                    st.error(f"⚠️ Summation Error: Total percentages equal {total_percentage_check}%. It must equal exactly 100% to calculate.")
+                else:
+                    # Capture "Your" specific liability amount safely
+                    your_row = shares_df[shares_df["Individual"].lower().str.contains("you")]
+                    your_share_val = your_row["Owed Amount (S$)"].values[0] if not your_row.empty else (total_bill / num_people)
+                    
+                    st.info(f"💡 **Your Personal Out-Of-Pocket Share:** S$ {your_share_val:,.2f}")
+                    
+                    # DIRECT ACTION BUTTON: Commits just YOUR share to the main ledger!
+                    if st.button("📥 Commit My Share to Expense Ledger", use_container_width=True):
+                        if bill_title.strip():
+                            new_split_tx = pd.DataFrame([{
+                                "Date": datetime.now().strftime("%Y-%m-%d"),
+                                "Description": f"[Split] {bill_title.strip().capitalize()}",
+                                "Category": "Other",
+                                "Amount": float(your_share_val),
+                                "Type": "Expense"
+                            }])
+                            st.session_state.transactions = pd.concat([st.session_state.transactions, new_split_tx], ignore_index=True)
+                            st.success(f"Successfully pushed S$ {your_share_val:.2f} into your personal main transaction logs!")
+                            st.rerun()
+                        else:
+                            st.error("Please add a description to log your share.")
+            else:
+                st.info("Input a bill amount and add names inside the manager form to parse structural shared debt summaries.")
 # ==============================================================================
 # 🎯 VIEW LAYER: GOALS TRACKING (COMPLETED WITH STEP 4)
 # ==============================================================================
