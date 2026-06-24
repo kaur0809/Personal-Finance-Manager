@@ -405,38 +405,101 @@ if navigation_pane == "📊 Dashboard":
         """)
 
 
+       with right_grid:
+        st.subheader("♊ Gemini AI Financial Assistant")
+        st.markdown("Engage in a continuous, live consultation regarding your wealth matrix and dashboard records.")
         
-        # Part 1: The Live Chat Interface at the Top Right
-        st.subheader("🤖 Live Assistant Interface")
-        
-        chat_container = st.container(height=350)
+        # 1. Standardized Chat Output Viewport
+        chat_container = st.container(height=400)
         with chat_container:
-            for msg in st.session_state.chat_history:
-                with st.chat_message(msg["role"]):
-                    st.write(msg["content"])
-                        
-        if user_query := st.chat_input("Ask MR.MNY anything about your money..."):
+            for message in st.session_state.chat_history:
+                with st.chat_message(message["role"]):
+                    st.write(message["content"])
+
+        # 2. Continuous Chat Input Trigger
+        if user_query := st.chat_input("Ask Gemini anything about your money...", key="gemini_perfected_chat_input"):
+            # Instantly display user input to maintain UI responsiveness
             with chat_container:
                 with st.chat_message("user"):
                     st.write(user_query)
-            st.session_state.chat_history.append({"role": "user", "content": user_query})
             
-            # (Your deterministic/mock logic engine handles matching here)
-            income_val = st.session_state.base_monthly_income
-            savings_target = st.session_state.monthly_savings_goal
-            spendable_cash = income_val - savings_target
-            needs_50 = income_val * 0.50
-            wants_30 = income_val * 0.30
-            savings_20 = income_val * 0.20
-            query_clean = user_query.lower()
+            # --- CALCULATE LIVE METRICS FOR SYSTEM CONTEXT ---
+            total_normalized_monthly_income = 0.0
+            if not st.session_state.income_streams.empty:
+                for _, row in st.session_state.income_streams.iterrows():
+                    try:
+                        amt = float(row.get("Amount", 0.0))
+                        freq = row.get("Frequency", "Monthly")
+                        if freq == "Monthly": total_normalized_monthly_income += amt
+                        elif freq == "Quarterly": total_normalized_monthly_income += (amt / 3)
+                        elif freq == "Annually": total_normalized_monthly_income += (amt / 12)
+                    except:
+                        pass
+
+            expenses_summary = ""
+            if not df_tx.empty and "Type" in df_tx.columns:
+                exp_df = df_tx[df_tx['Type'] == 'Expense']
+                if not exp_df.empty:
+                    expenses_summary = exp_df.groupby('Category')['Amount'].sum().to_string()
+
+            # Invisible system rules to maintain elite financial posture
+            system_context = f"""
+            You are Gemini, an elite personal finance manager.
             
-            if any(k in query_clean for k in ['spend', 'budget', 'salary', 'income', 'money', 'how to']):
-                ai_response = f"### 📊 Your Blueprint\n* **Income:** `S$ {income_val:,.2f}`\n* **Savings Goal:** `S$ {savings_target:,.2f}`\n\n1. **Needs (50%):** `S$ {needs_50:,.2f}`\n2. **Wants (30%):** `S$ {wants_30:,.2f}`\n3. **Savings (20%):** `S$ {savings_20:,.2f}`"
-            elif any(k in query_clean for k in ['time value', 'tvm', 'value of money']):
-                ai_response = "### ⏳ Time Value of Money (TVM)\nMoney available today is worth more than the identical sum in the future due to its potential earning capacity and inflation vectors."
-            else:
-                ai_response = f"### 💼 Strategy Desk\nAnalyzing query: *\"{user_query}\"*\n* Core Envelope: **S$ {net_balance:,.2f}**\n* Running Target Metric: **S$ {savings_target:,.2f}**"
+            User's Real-Time Financial Parameters:
+            - Combined Monthly Income Baseline: ₹ {total_normalized_monthly_income:,.2f}
+            - Currency Context: Indian Rupee (₹)
+            - Logged Category Outlays:
+            {expenses_summary if expenses_summary else "No expenses logged yet."}
+            
+            Operational Directives:
+            - Provide contextual financial advice based on their exact ₹ {total_normalized_monthly_income:,.2f} baseline.
+            - Answer questions comprehensively and allow for multi-turn follow-ups.
+            - Format answers with bold clean labels and markdown lists.
+            """
+
+            # --- CALL THE LIVE CONVERSATION SESSIONS API ---
+            try:
+                from google import genai
+                from google.genai import types
+                import os
                 
+                raw_key = st.secrets.get("GEMINI_API_KEY", os.environ.get("GEMINI_API_KEY", ""))
+                clean_key = raw_key.strip().replace('"', '').replace("'", "") if raw_key else ""
+                
+                # Initialize standard client
+                client = genai.Client(api_key=clean_key)
+                
+                # Format our running chat_history array into the SDK's explicit Content structure
+                formatted_contents = []
+                for msg in st.session_state.chat_history:
+                    # Map 'assistant' to 'model' to comply with official API guidelines
+                    api_role = "model" if msg["role"] == "assistant" else "user"
+                    formatted_contents.append(
+                        types.Content(role=api_role, parts=[types.Part.from_text(text=msg["content"])])
+                    )
+                
+                # Append the brand new question to the historical payload
+                formatted_contents.append(
+                    types.Content(role="user", parts=[types.Part.from_text(text=user_query)])
+                )
+                
+                # Execute content generation with full history awareness
+                response = client.models.generate_content(
+                    model='gemini-2.5-flash',
+                    contents=formatted_contents,
+                    config=types.GenerateContentConfig(
+                        system_instruction=system_context,
+                        temperature=0.3
+                    )
+                )
+                ai_response = response.text
+                
+            except Exception as e:
+                ai_response = f"⚠️ **Gemini Engine Notice:** `{str(e)}`"
+            
+            # Commit the full interaction round-trip to the session state
+            st.session_state.chat_history.append({"role": "user", "content": user_query})
             st.session_state.chat_history.append({"role": "assistant", "content": ai_response})
             st.rerun()
 
