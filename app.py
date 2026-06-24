@@ -404,8 +404,7 @@ if navigation_pane == "📊 Dashboard":
             > — ***{selected_insight['author']}***
         """)
 
-
-       with right_grid:
+     with right_grid:
         st.subheader("♊ Gemini AI Financial Assistant")
         st.markdown("Engage in a continuous, live consultation regarding your wealth matrix and dashboard records.")
         
